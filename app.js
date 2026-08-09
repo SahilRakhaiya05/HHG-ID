@@ -36,36 +36,36 @@ const HQ = {
   createdAt: "2026-05-07T00:00:00.000Z",
 };
 
+/** Match competitor sticker classes */
 const CLASSES = [
-  "Terminal Surfer", "Ship-or-Ship Specialist", "Onchain Cartographer", "Prompt Pirate",
-  "Latency Assassin", "Beachside Architect", "Zero-Fluff Founder", "Fiber-Fed Builder",
-  "Sandbox Sovereign", "Stack Alchemist", "Deploy Day Captain", "Signal Over Noise",
-  "Goa Runtime Lead", "Token Tide Rider", "Agent Whisperer", "Mainnet Mariner",
-  "API Horizon Scout", "Commit Coastal", "Open Source Ocean", "Weekend Warship",
+  { id: "terminal-surfer", label: "Terminal Surfer" },
+  { id: "cache-raider", label: "Cache Raider" },
+  { id: "wave-rider", label: "Wave Rider" },
+  { id: "coconut-courier", label: "Coconut Courier" },
+  { id: "harbor-hopper", label: "Harbor Hopper" },
+  { id: "night-champion", label: "Night Champion" },
+  { id: "comfort-coder", label: "Comfort Coder" },
 ];
 
-const STORE = "hhgoa_id_v3";
+const STICKER_CDN = "https://hhgoa-own-id-card.vercel.app/stickers";
+const STORE = "hhgoa_id_v4";
 const $ = (id) => document.getElementById(id);
 
 const state = {
-  view: "landing", // landing | studio | tracker
+  view: "landing",
   image: null,
   objectUrl: null,
-  zoom: 1.1,
+  zoom: 1.15,
   panX: 0,
   panY: 0,
   name: "",
   stack: "",
-  title: CLASSES[(Math.random() * CLASSES.length) | 0],
+  titleId: CLASSES[(Math.random() * CLASSES.length) | 0].id,
   handle: "",
   city: "",
   team: "",
   bio: "",
   idNumber: "",
-  accent: "yellow",
-  barcode: true,
-  hindi: true,
-  stamp: true,
   listOnMap: true,
   lat: null,
   lng: null,
@@ -75,16 +75,21 @@ const state = {
   markers: new Map(),
   builders: [],
   radarTeams: [],
-  logos: { mark: null },
+  logos: { mark: null, pass: null },
+  stickers: {},
   mapReady: false,
+  mapBooted: false,
   tempMark: null,
   pickMode: false,
   pickLat: null,
   pickLng: null,
   pickLabel: "",
   returnToStudioAfterPick: false,
-  booted: false,
 };
+
+function classLabel() {
+  return CLASSES.find((c) => c.id === state.titleId)?.label || "Builder";
+}
 
 /* ── utils ── */
 function loadImg(src) {
@@ -119,7 +124,7 @@ function esc(s) {
   return String(s || "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 }
 function accent() {
-  return ACCENT[state.accent] || BRAND.yellow;
+  return BRAND.yellow;
 }
 function genIdNumber(seed) {
   let h = 2166136261;
@@ -191,14 +196,26 @@ function show(view) {
     updateLocUI();
   }
   if (view === "tracker") {
-    ensureMap().then(() => {
-      refreshMarkers();
-      renderLog();
-      updateHud();
-      if (state.pickMode) enterPickMode(false);
-      setTimeout(() => state.map?.invalidateSize(), 80);
-    });
+    // Boot ONLY first time map loads
+    if (!state.mapBooted) {
+      runMapBoot(() => {
+        state.mapBooted = true;
+        loadTracker();
+      });
+    } else {
+      loadTracker();
+    }
   }
+}
+
+async function loadTracker() {
+  $("boot").hidden = true;
+  await ensureMap();
+  refreshMarkers();
+  renderLog();
+  updateHud();
+  if (state.pickMode) enterPickMode(false);
+  setTimeout(() => state.map?.invalidateSize(), 100);
 }
 
 /* ── location pick mode (select BEFORE pin) ── */
@@ -371,264 +388,130 @@ function spinRadar(canvas, { speed = 0.045, dots = [] } = {}) {
   return () => cancelAnimationFrame(raf);
 }
 
-/* ── canvas ID card (single format) ── */
-function drawCover(c, img, box) {
-  const { x, y, w, h } = box;
-  const scale = Math.max(w / img.width, h / img.height) * state.zoom;
+/* ── canvas: official Builder Pass template (from own-id-card RE) ── */
+// Layout calibrated on BuilderPass.png 1536×1024
+const PASS = {
+  W: 1536,
+  H: 1024,
+  photo: { cx: 344, cy: 603, r: 142 },
+  name: { x: 620, y: 400, maxW: 780 },
+  stack: { x: 620, y: 530, maxW: 780 },
+  title: { x: 620, y: 660, maxW: 780 },
+  id: { x: 620, y: 760, maxW: 400 },
+  handle: { x: 1020, y: 760, maxW: 380 },
+};
+
+function drawCoverCircle(c, img, cx, cy, r) {
+  const size = r * 2;
+  const scale = Math.max(size / img.width, size / img.height) * state.zoom;
   const dw = img.width * scale;
   const dh = img.height * scale;
-  const dx = x + (w - dw) / 2 + (state.panX / 100) * w;
-  const dy = y + (h - dh) / 2 + (state.panY / 100) * h;
+  const dx = cx - dw / 2 + (state.panX / 100) * size;
+  const dy = cy - dh / 2 + (state.panY / 100) * size;
   c.save();
   c.beginPath();
-  c.rect(x, y, w, h);
+  c.arc(cx, cy, r, 0, Math.PI * 2);
   c.clip();
   c.drawImage(img, dx, dy, dw, dh);
   c.restore();
 }
-function rr(c, x, y, w, h, r) {
-  const R = Math.min(r, w / 2, h / 2);
-  c.beginPath();
-  c.moveTo(x + R, y);
-  c.arcTo(x + w, y, x + w, y + h, R);
-  c.arcTo(x + w, y + h, x, y + h, R);
-  c.arcTo(x, y + h, x, y, R);
-  c.arcTo(x, y, x + w, y, R);
-  c.closePath();
-}
-function brackets(c, x, y, w, h, len, thick, col) {
-  c.strokeStyle = col;
-  c.lineWidth = thick;
-  c.lineCap = "square";
-  const s = [
-    [x, y + len, x, y, x + len, y],
-    [x + w - len, y, x + w, y, x + w, y + len],
-    [x, y + h - len, x, y + h, x + len, y + h],
-    [x + w - len, y + h, x + w, y + h, x + w, y + h - len],
-  ];
-  for (const [a, b, d, e, f, g] of s) {
-    c.beginPath();
-    c.moveTo(a, b);
-    c.lineTo(d, e);
-    c.lineTo(f, g);
-    c.stroke();
-  }
-}
-function barcode(c, x, y, w, h, col) {
-  c.fillStyle = col;
-  let px = x;
-  while (px < x + w) {
-    const bw = 1 + ((Math.sin(px * 11.7) + 1) * 2) | 0;
-    if ((px | 0) % 3) c.fillRect(px, y, bw, h);
-    px += bw + 1;
-  }
-}
-function fit(c, text, maxW, maxSize, min = 20, fam = "Imbue, serif") {
+
+function fit(c, text, maxW, maxSize, min = 18, fam = "Space Grotesk, sans-serif", weight = "800") {
   let s = maxSize;
-  c.font = `600 ${s}px ${fam}`;
+  c.font = `${weight} ${s}px ${fam}`;
   while (s > min && c.measureText(text).width > maxW) {
     s--;
-    c.font = `600 ${s}px ${fam}`;
+    c.font = `${weight} ${s}px ${fam}`;
   }
   return s;
-}
-function stamp(c, cx, cy, r, col, id) {
-  c.save();
-  c.strokeStyle = col;
-  c.lineWidth = 3;
-  c.beginPath();
-  c.arc(cx, cy, r, 0, Math.PI * 2);
-  c.stroke();
-  c.beginPath();
-  c.arc(cx, cy, r - 9, 0, Math.PI * 2);
-  c.stroke();
-  c.fillStyle = col;
-  c.font = "700 10px JetBrains Mono, monospace";
-  c.textAlign = "center";
-  c.fillText("HH GOA", cx, cy - 6);
-  c.fillText("2026", cx, cy + 8);
-  c.font = "600 8px JetBrains Mono, monospace";
-  c.fillText((id || "").slice(-4), cx, cy + 22);
-  c.restore();
 }
 
 function renderCard() {
   const canvas = $("canvas");
   if (!canvas) return;
   const c = canvas.getContext("2d");
-  const W = 1080;
-  const H = 1350;
+  const { W, H, photo, name: nameBox, stack: stackBox, title: titleBox } = PASS;
   canvas.width = W;
   canvas.height = H;
-  const A = accent();
 
-  // background
-  const bg = c.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, "#0e7d45");
-  bg.addColorStop(0.45, BRAND.green);
-  bg.addColorStop(1, BRAND.greenInk);
-  c.fillStyle = bg;
-  c.fillRect(0, 0, W, H);
-
-  // soft sun
-  const sun = c.createRadialGradient(W * 0.88, H * 0.1, 0, W * 0.88, H * 0.1, 360);
-  sun.addColorStop(0, A + "55");
-  sun.addColorStop(1, A + "00");
-  c.fillStyle = sun;
-  c.beginPath();
-  c.arc(W * 0.88, H * 0.1, 360, 0, Math.PI * 2);
-  c.fill();
-
-  // outer frame
-  c.strokeStyle = A;
-  c.lineWidth = 14;
-  c.strokeRect(28, 28, W - 56, H - 56);
-  c.strokeStyle = "rgba(255,255,255,.12)";
-  c.lineWidth = 2;
-  c.strokeRect(48, 48, W - 96, H - 96);
-
-  // header bar
-  c.fillStyle = BRAND.greenInk;
-  c.fillRect(64, 64, W - 128, 118);
-  c.fillStyle = A;
-  c.fillRect(64, 64, W - 128, 8);
-
-  c.textAlign = "left";
-  c.fillStyle = A;
-  c.font = "700 14px JetBrains Mono, monospace";
-  c.fillText("HACKER HOUSE GOA · CREDENTIAL", 88, 108);
-  c.fillStyle = BRAND.white;
-  c.font = "600 52px Imbue, serif";
-  c.fillText("BUILDER ID", 88, 158);
-
-  c.textAlign = "right";
-  c.fillStyle = A;
-  c.font = "700 13px JetBrains Mono, monospace";
-  c.fillText(state.idNumber || "HHG-2026-····", W - 88, 118);
-  c.fillStyle = BRAND.cream;
-  c.font = "500 13px JetBrains Mono, monospace";
-  c.fillText(state.hindi ? "28–31 OCT 2026 · गोवा" : "28–31 OCT 2026 · GOA", W - 88, 148);
-
-  // photo
-  const photo = { x: 88, y: 210, w: W - 176, h: 520 };
-  c.fillStyle = BRAND.greenInk;
-  rr(c, photo.x, photo.y, photo.w, photo.h, 18);
-  c.fill();
-  c.save();
-  rr(c, photo.x, photo.y, photo.w, photo.h, 18);
-  c.clip();
-  if (state.image) {
-    drawCover(c, state.image, photo);
+  // 1) Official template background
+  if (state.logos.pass) {
+    c.drawImage(state.logos.pass, 0, 0, W, H);
   } else {
-    c.fillStyle = "rgba(254,225,1,.08)";
-    c.fillRect(photo.x, photo.y, photo.w, photo.h);
-    c.fillStyle = A;
-    c.font = "600 24px JetBrains Mono, monospace";
-    c.textAlign = "center";
-    c.fillText("YOUR PHOTO", W / 2, photo.y + photo.h / 2);
+    // fallback green card
+    c.fillStyle = "#063725";
+    c.fillRect(0, 0, W, H);
+    c.fillStyle = BRAND.yellow;
+    c.font = "800 64px Space Grotesk, sans-serif";
+    c.fillText("HACKER HOUSE", 80, 100);
   }
-  c.restore();
-  c.strokeStyle = A;
-  c.lineWidth = 4;
-  rr(c, photo.x, photo.y, photo.w, photo.h, 18);
-  c.stroke();
-  brackets(c, photo.x + 14, photo.y + 14, photo.w - 28, photo.h - 28, 44, 5, A);
 
-  // info plate
-  const py = 760;
-  c.fillStyle = "rgba(2,20,12,.92)";
-  rr(c, 88, py, W - 176, 450, 18);
-  c.fill();
-  c.strokeStyle = A + "55";
-  c.lineWidth = 2;
-  rr(c, 88, py, W - 176, 450, 18);
-  c.stroke();
-  c.fillStyle = A;
-  c.fillRect(88, py, 12, 450);
+  // 2) Circular photo in pass hole
+  if (state.image) {
+    drawCoverCircle(c, state.image, photo.cx, photo.cy, photo.r);
+  } else {
+    c.fillStyle = "rgba(254,225,1,.12)";
+    c.beginPath();
+    c.arc(photo.cx, photo.cy, photo.r, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = BRAND.yellow;
+    c.font = "700 18px JetBrains Mono, monospace";
+    c.textAlign = "center";
+    c.fillText("PHOTO", photo.cx, photo.cy + 6);
+  }
 
-  const name = (state.name || "YOUR NAME").toUpperCase();
-  const stack = state.stack || "Builder · Stack TBD";
-  const title = state.title || "Builder Class";
-  const team = state.team || "";
-  const bio = state.bio || "Less noise. More signal.";
-  const handle = state.handle || "";
-  const city = state.city || "";
+  // 3) Text in form fields (cream/yellow on green)
+  const name = (state.name || "BUILDER NAME").toUpperCase();
+  const stack = (state.stack || "STACK & ROLE").toUpperCase();
+  const title = classLabel().toUpperCase();
 
   c.textAlign = "left";
-  c.fillStyle = A + "bb";
-  c.font = "700 12px JetBrains Mono, monospace";
-  c.fillText("NAME", 122, py + 40);
-  const ns = fit(c, name, W - 280, 56);
-  c.fillStyle = BRAND.white;
-  c.font = `600 ${ns}px Imbue, serif`;
-  c.fillText(name, 122, py + 92);
+  c.fillStyle = "#FFF8EB";
+  let ns = fit(c, name, nameBox.maxW, 42, 22, "Space Grotesk, sans-serif", "800");
+  c.font = `800 ${ns}px Space Grotesk, sans-serif`;
+  c.fillText(name, nameBox.x, nameBox.y);
 
-  c.fillStyle = A + "bb";
-  c.font = "700 12px JetBrains Mono, monospace";
-  c.fillText("STACK / ROLE", 122, py + 132);
-  c.fillStyle = BRAND.cream;
-  c.font = "600 22px JetBrains Mono, monospace";
-  c.fillText(stack.slice(0, 42), 122, py + 164);
+  c.fillStyle = "#FEE101";
+  let ss = fit(c, stack, stackBox.maxW, 28, 16, "Space Grotesk, sans-serif", "700");
+  c.font = `700 ${ss}px Space Grotesk, sans-serif`;
+  c.fillText(stack, stackBox.x, stackBox.y);
 
-  c.fillStyle = A + "bb";
-  c.font = "700 12px JetBrains Mono, monospace";
-  c.fillText("BUILDER CLASS", 122, py + 208);
-  c.fillStyle = A;
-  c.font = "600 32px Imbue, serif";
-  c.fillText(title, 122, py + 248);
+  c.fillStyle = "#E52B50";
+  let ts = fit(c, title, titleBox.maxW, 30, 16, "Space Grotesk, sans-serif", "800");
+  c.font = `800 ${ts}px Space Grotesk, sans-serif`;
+  c.fillText(title, titleBox.x, titleBox.y);
 
-  // meta row
-  let metaY = py + 290;
-  if (team) {
-    c.fillStyle = A + "bb";
-    c.font = "700 11px JetBrains Mono, monospace";
-    c.fillText("TEAM", 122, metaY);
-    c.fillStyle = BRAND.white;
-    c.font = "700 18px Space Grotesk, sans-serif";
-    c.fillText(team, 122, metaY + 26);
-    metaY += 55;
-  }
+  // ID + handle + city + team
+  c.fillStyle = "rgba(254,225,1,.85)";
+  c.font = "700 16px JetBrains Mono, monospace";
+  c.fillText(state.idNumber || "HHG-2026-····", PASS.id.x, PASS.id.y);
 
-  c.fillStyle = "rgba(245,237,214,.7)";
-  c.font = "500 15px JetBrains Mono, monospace";
-  c.fillText(bio.slice(0, 58), 122, metaY);
-
-  c.fillStyle = "rgba(245,237,214,.5)";
-  c.font = "500 13px JetBrains Mono, monospace";
-  const line2 = [
-    handle ? (handle.startsWith("@") ? handle : `@${handle}`) : null,
-    city || null,
-    state.idNumber,
+  const meta = [
+    state.handle ? (state.handle.startsWith("@") ? state.handle : `@${state.handle}`) : null,
+    state.city || null,
+    state.team ? `TEAM ${state.team}` : null,
   ]
     .filter(Boolean)
-    .join("  ·  ");
-  c.fillText(line2, 122, metaY + 28);
+    .join("  ·  ")
+    .toUpperCase();
+  if (meta) {
+    c.fillStyle = "rgba(255,248,235,.75)";
+    c.font = "600 15px Space Grotesk, sans-serif";
+    c.fillText(meta.slice(0, 48), PASS.handle.x - 200, PASS.handle.y);
+  }
 
-  c.textAlign = "right";
-  c.fillStyle = A;
+  // subtle #FrameInGoa
+  c.fillStyle = "rgba(254,225,1,.55)";
   c.font = "700 14px JetBrains Mono, monospace";
-  c.fillText("HACKER HOUSE GOA", W - 120, py + 380);
-  c.fillStyle = BRAND.cream;
-  c.font = "500 12px JetBrains Mono, monospace";
-  c.fillText("OFFICIAL BUILDER ID", W - 120, py + 404);
+  c.textAlign = "right";
+  c.fillText("#FrameInGoa", W - 48, H - 36);
+  c.textAlign = "left";
 
-  if (state.stamp) stamp(c, W - 170, 130, 44, A, state.idNumber);
-  if (state.barcode) barcode(c, 120, H - 72, W - 240, 26, A);
-
-  // footer strip
-  c.fillStyle = A;
-  c.fillRect(56, H - 48, W - 112, 8);
-  c.fillStyle = BRAND.greenInk;
-  c.fillRect(56, H - 40, W - 112, 28);
-  c.fillStyle = A;
-  c.font = "700 12px JetBrains Mono, monospace";
-  c.textAlign = "center";
-  c.fillText("#FrameInGoa  ·  LESS NOISE. MORE SIGNAL.  ·  247 BUILDERS", W / 2, H - 20);
-
-  if (state.logos.mark) {
-    try {
-      c.drawImage(state.logos.mark, W - 155, 78, 52, 52);
-    } catch { /* */ }
+  // optional bio under fields
+  if (state.bio) {
+    c.fillStyle = "rgba(255,248,235,.55)";
+    c.font = "500 14px Space Grotesk, sans-serif";
+    c.fillText(state.bio.slice(0, 56), nameBox.x, 820);
   }
 
   const ready = !!state.image;
@@ -899,7 +782,7 @@ async function download() {
 }
 function tweet() {
   const n = state.name.trim() ? `${state.name.trim()} · ` : "";
-  return `${n}Builder ID locked for Hacker House Goa 2026\n${state.idNumber} · ${state.title || "Builder"}\n28–31 Oct · Goa\n\n#FrameInGoa #HHGoa #HackerHouseGoa`;
+  return `${n}Builder ID locked for Hacker House Goa 2026\n${state.idNumber} · ${classLabel()}\n28–31 Oct · Goa\n\n#FrameInGoa #HHGoa #HackerHouseGoa`;
 }
 async function shareX() {
   renderCard();
@@ -940,7 +823,8 @@ async function dropPin() {
   const thumb = document.createElement("canvas");
   thumb.width = 160;
   thumb.height = 160;
-  drawCover(thumb.getContext("2d"), state.image, { x: 0, y: 0, w: 160, h: 160 });
+  const tc = thumb.getContext("2d");
+  drawCoverCircle(tc, state.image, 80, 80, 80);
   const photo = thumb.toDataURL("image/jpeg", 0.75);
   const lat = state.lat;
   const lng = state.lng;
@@ -949,7 +833,7 @@ async function dropPin() {
     kind: "you",
     name: state.name.trim() || "Anonymous Builder",
     stack: state.stack.trim() || "Builder",
-    title: state.title.trim() || "Builder Class",
+    title: classLabel(),
     idNumber: state.idNumber,
     handle: state.handle.trim(),
     team: state.team.trim(),
@@ -1028,14 +912,11 @@ function runSweep() {
 function sync() {
   state.name = $("f-name").value;
   state.stack = $("f-stack").value;
-  state.title = $("f-title").value;
+  state.titleId = $("f-title")?.value || state.titleId;
   state.handle = $("f-handle").value;
   state.city = $("f-city").value;
   state.team = $("f-team").value;
   state.bio = $("f-bio").value;
-  state.barcode = $("t-barcode").checked;
-  state.hindi = $("t-hindi").checked;
-  state.stamp = $("t-qr").checked;
   state.listOnMap = $("t-list").checked;
   renderCard();
   $("id-display").textContent = state.idNumber;
@@ -1102,18 +983,26 @@ function bind() {
 
   [
     "f-name", "f-stack", "f-title", "f-handle", "f-city", "f-team", "f-bio",
-    "t-barcode", "t-hindi", "t-qr", "t-list", "f-lat", "f-lng",
+    "t-list", "f-lat", "f-lng",
   ].forEach((id) => {
-    $(id).addEventListener("input", sync);
-    $(id).addEventListener("change", sync);
+    const el = $(id);
+    if (!el) return;
+    el.addEventListener("input", sync);
+    el.addEventListener("change", sync);
   });
 
-  $("f-title").value = state.title;
+  // populate builder class select
+  const titleSel = $("f-title");
+  if (titleSel && titleSel.tagName === "SELECT") {
+    titleSel.innerHTML = CLASSES.map(
+      (c) => `<option value="${c.id}" ${c.id === state.titleId ? "selected" : ""}>${c.label}</option>`
+    ).join("");
+  }
   updateLocUI();
 
   $("reroll").onclick = () => {
-    state.title = CLASSES[(Math.random() * CLASSES.length) | 0];
-    $("f-title").value = state.title;
+    state.titleId = CLASSES[(Math.random() * CLASSES.length) | 0].id;
+    if (titleSel) titleSel.value = state.titleId;
     renderCard();
   };
   $("regen-id").onclick = () => {
@@ -1135,15 +1024,6 @@ function bind() {
     state.panY = +$("pany").value;
     renderCard();
   };
-
-  document.querySelectorAll(".sw").forEach((b) => {
-    b.onclick = () => {
-      document.querySelectorAll(".sw").forEach((x) => x.classList.remove("on"));
-      b.classList.add("on");
-      state.accent = b.dataset.a;
-      renderCard();
-    };
-  });
 
   $("btn-pick-map").onclick = () => openMapPicker();
   $("btn-pick-from-map").onclick = () => {
@@ -1207,28 +1087,33 @@ function bind() {
   };
 }
 
-/* ── global boot (Spidey-style) ── */
-function runBoot() {
+/* ── map boot ONLY (first map open — Spidey-style) ── */
+function runMapBoot(done) {
   const boot = $("boot");
   const log = $("boot-log");
   const fill = $("boot-fill");
   const enter = $("btn-enter");
   const search = $("boot-search");
+  boot.hidden = false;
+  log.textContent = "";
+  fill.style.width = "0%";
+  enter.hidden = true;
+  search.style.animation = "";
+  search.textContent = "SEARCHING FOR HACKER MAN…";
+
   const lines = [
-    "INITIALIZING HACKER TRACKER v2.0…",
-    "BOOTING CORE SERVICES [OK]",
-    "LOADING MAP RENDER PIPELINE…",
+    "INITIALIZING MAP RENDER PIPELINE…",
     "CALIBRATING RADAR SWEEP [OK]",
-    "HYDRATING BUILDER REGISTRY…",
     "LOCATING HH GOA HQ [LOCKED]",
-    "OPENING GLOBAL MESH…",
+    "HYDRATING BUILDER PINS…",
+    "OPENING WORLD MESH…",
     "SEARCHING FOR HACKER MAN…",
-    "ALL SYSTEMS NOMINAL",
+    "MAP SYSTEMS NOMINAL",
   ];
   let i = 0;
   let p = 0;
   const stop = spinRadar($("boot-radar"), {
-    speed: 0.065,
+    speed: 0.07,
     dots: [
       { a: 0.4, dist: 0.5, color: BRAND.yellow, size: 4 },
       { a: 2.1, dist: 0.72, color: BRAND.pink, size: 3 },
@@ -1236,59 +1121,57 @@ function runBoot() {
       { a: 5.4, dist: 0.85, color: "#00ff70", size: 3 },
     ],
   });
-  const phrases = [
-    "SEARCHING FOR HACKER MAN…",
-    "SCANNING WORLD MESH…",
-    "LOCKING GOA HQ…",
-    "BUILDER ID SYSTEM READY…",
-  ];
+  const phrases = ["SEARCHING FOR HACKER MAN…", "SCANNING WORLD MESH…", "LOCKING GOA HQ…", "MAP ONLINE…"];
   let pi = 0;
   const pt = setInterval(() => {
     pi = (pi + 1) % phrases.length;
     search.textContent = phrases[pi];
-  }, 800);
+  }, 700);
   const tick = () => {
     if (i < lines.length) {
       log.textContent += (i ? "\n" : "") + lines[i++];
       log.scrollTop = log.scrollHeight;
-      setTimeout(tick, 95);
+      setTimeout(tick, 80);
     } else {
       clearInterval(pt);
-      search.textContent = "SIGNAL LOCKED";
+      search.textContent = "MAP READY";
       search.style.animation = "none";
       fill.style.width = "100%";
       enter.hidden = false;
       stop();
-      spinRadar($("boot-radar"), {
-        speed: 0.03,
-        dots: [{ a: 1.2, dist: 0.55, color: BRAND.yellow, size: 5 }],
-      });
+      // auto-enter after short beat if user doesn't click
+      const auto = setTimeout(() => {
+        boot.hidden = true;
+        done?.();
+      }, 900);
+      enter.onclick = () => {
+        clearTimeout(auto);
+        boot.hidden = true;
+        done?.();
+      };
     }
   };
   const prog = setInterval(() => {
-    p = Math.min(100, p + 2 + Math.random() * 2.5);
+    p = Math.min(100, p + 3 + Math.random() * 3);
     fill.style.width = p + "%";
     if (p >= 100) clearInterval(prog);
-  }, 60);
+  }, 50);
   tick();
-  enter.onclick = () => {
-    boot.hidden = true;
-    state.booted = true;
-    show("landing");
-  };
 }
 
 async function main() {
   loadStore();
   state.idNumber = genIdNumber("boot");
-  // hide app shells until boot finishes
-  $("landing").hidden = true;
-  $("studio").hidden = true;
-  $("tracker").hidden = true;
+  $("boot").hidden = true; // no boot on landing
   bind();
   try {
     state.logos.mark = await loadImg("./public/assets/2-47.svg");
   } catch { /* */ }
+  try {
+    state.logos.pass = await loadImg("./public/assets/BuilderPass.png");
+  } catch {
+    console.warn("BuilderPass template missing");
+  }
   try {
     const r = await fetch("./data/radar.json");
     const data = await r.json();
@@ -1306,24 +1189,9 @@ async function main() {
   updateLocUI();
 
   const q = new URLSearchParams(location.search);
-  if (q.get("skipboot") === "1") {
-    $("boot").hidden = true;
-    state.booted = true;
-    if (q.get("map") === "1") show("tracker");
-    else if (q.get("studio") === "1") show("studio");
-    else show("landing");
-  } else {
-    runBoot();
-    // remember intended deep link after boot
-    $("btn-enter").addEventListener(
-      "click",
-      () => {
-        if (q.get("map") === "1") show("tracker");
-        else if (q.get("studio") === "1") show("studio");
-      },
-      { once: true }
-    );
-  }
+  if (q.get("map") === "1") show("tracker");
+  else if (q.get("studio") === "1") show("studio");
+  else show("landing");
 }
 
 main();
