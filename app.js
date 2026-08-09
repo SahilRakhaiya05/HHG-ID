@@ -67,8 +67,10 @@ const state = {
   hindi: true,
   stamp: true,
   listOnMap: true,
-  lat: HQ.lat + 0.012,
-  lng: HQ.lng + 0.008,
+  lat: null,
+  lng: null,
+  locationSet: false,
+  locationLabel: "",
   map: null,
   markers: new Map(),
   builders: [],
@@ -76,6 +78,12 @@ const state = {
   logos: { mark: null },
   mapReady: false,
   tempMark: null,
+  pickMode: false,
+  pickLat: null,
+  pickLng: null,
+  pickLabel: "",
+  returnToStudioAfterPick: false,
+  booted: false,
 };
 
 /* ── utils ── */
@@ -134,6 +142,42 @@ function saveStore() {
   localStorage.setItem(STORE, JSON.stringify(state.builders));
 }
 
+/* ── toast ── */
+function toast(msg, ms = 2400) {
+  const el = $("toast");
+  if (!el) return;
+  el.textContent = msg;
+  el.hidden = false;
+  requestAnimationFrame(() => el.classList.add("show"));
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => {
+    el.classList.remove("show");
+    setTimeout(() => { el.hidden = true; }, 250);
+  }, ms);
+}
+
+function updateLocUI() {
+  const status = $("loc-status");
+  const label = $("loc-label");
+  const coords = $("loc-coords");
+  if (!status) return;
+  if (state.locationSet && state.lat != null) {
+    status.classList.add("is-set");
+    label.textContent = state.locationLabel || "Location locked";
+    coords.textContent = `${Number(state.lat).toFixed(4)}, ${Number(state.lng).toFixed(4)}`;
+    if ($("f-lat")) $("f-lat").value = Number(state.lat).toFixed(5);
+    if ($("f-lng")) $("f-lng").value = Number(state.lng).toFixed(5);
+  } else {
+    status.classList.remove("is-set");
+    label.textContent = "No location selected";
+    coords.textContent = "Pick on map before pinning";
+    if ($("f-lat")) $("f-lat").value = "";
+    if ($("f-lng")) $("f-lng").value = "";
+  }
+  const pinBtn = $("btn-pin");
+  if (pinBtn) pinBtn.disabled = !(state.image && state.locationSet);
+}
+
 /* ── views ── */
 function show(view) {
   state.view = view;
@@ -144,14 +188,122 @@ function show(view) {
   if (view === "studio") {
     renderCard();
     $("id-display").textContent = state.idNumber;
+    updateLocUI();
   }
   if (view === "tracker") {
     ensureMap().then(() => {
       refreshMarkers();
       renderLog();
       updateHud();
+      if (state.pickMode) enterPickMode(false);
+      setTimeout(() => state.map?.invalidateSize(), 80);
     });
   }
+}
+
+/* ── location pick mode (select BEFORE pin) ── */
+async function openMapPicker() {
+  state.returnToStudioAfterPick = true;
+  state.pickMode = true;
+  show("tracker");
+  await ensureMap();
+  enterPickMode(true);
+}
+
+function enterPickMode(resetPick = true) {
+  state.pickMode = true;
+  document.body.classList.add("is-picking");
+  $("pick-banner").hidden = false;
+  $("map-hint").textContent = "TAP MAP to choose · then Confirm location";
+  $("chip-status").textContent = "SELECT LOCATION";
+  $("btn-pick-confirm").disabled = !(state.pickLat != null || (state.locationSet && !resetPick));
+  if (resetPick) {
+    state.pickLat = state.locationSet ? state.lat : null;
+    state.pickLng = state.locationSet ? state.lng : null;
+    state.pickLabel = state.locationLabel || "";
+  }
+  if (state.pickLat != null) {
+    setPickMarker(state.pickLat, state.pickLng, state.pickLabel);
+    $("btn-pick-confirm").disabled = false;
+    $("pick-selected").hidden = false;
+    $("pick-selected-text").textContent =
+      `${state.pickLabel || "Selected"} · ${Number(state.pickLat).toFixed(4)}, ${Number(state.pickLng).toFixed(4)}`;
+  } else {
+    $("pick-selected").hidden = true;
+    $("btn-pick-confirm").disabled = true;
+  }
+  toast("Tap the map to select your location");
+}
+
+function exitPickMode() {
+  state.pickMode = false;
+  document.body.classList.remove("is-picking");
+  $("pick-banner").hidden = true;
+  $("map-hint").textContent = "Explore · or SELECT LOCATION from Studio";
+  $("chip-status").textContent = state.builders.length ? "BUILDERS LIVE" : "WORLD SCAN";
+}
+
+function setPickMarker(lat, lng, label) {
+  state.pickLat = lat;
+  state.pickLng = lng;
+  state.pickLabel = label || state.pickLabel || "Selected";
+  if (state.tempMark) state.tempMark.remove();
+  if (!state.map) return;
+  state.tempMark = L.marker([lat, lng], {
+    icon: L.divIcon({
+      className: "",
+      html: `<div class="mk you"><span>★</span></div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 24],
+    }),
+    zIndexOffset: 1000,
+  }).addTo(state.map);
+  $("pick-selected").hidden = false;
+  $("pick-selected-text").textContent =
+    `${state.pickLabel} · ${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}`;
+  $("btn-pick-confirm").disabled = false;
+  $("chip-coords").textContent = `${Number(lat).toFixed(4)}, ${Number(lng).toFixed(4)}`;
+}
+
+function confirmPickLocation() {
+  if (state.pickLat == null || state.pickLng == null) {
+    toast("Tap the map first");
+    return;
+  }
+  state.lat = state.pickLat;
+  state.lng = state.pickLng;
+  state.locationSet = true;
+  state.locationLabel = state.pickLabel || state.city || "Custom pin";
+  if (state.locationLabel && state.locationLabel !== "Selected") {
+    state.city = state.city || state.locationLabel;
+    if ($("f-city") && !$("f-city").value) $("f-city").value = state.city;
+  }
+  exitPickMode();
+  updateLocUI();
+  toast("Location locked · now Confirm pin");
+  if (state.returnToStudioAfterPick) {
+    state.returnToStudioAfterPick = false;
+    show("studio");
+  }
+  renderCard();
+}
+
+function cancelPick() {
+  exitPickMode();
+  if (state.tempMark && !state.locationSet) {
+    state.tempMark.remove();
+    state.tempMark = null;
+  } else if (state.locationSet && state.map) {
+    setPickMarker(state.lat, state.lng, state.locationLabel);
+    // keep marker visual only if still picking - already exited
+    if (state.tempMark) {
+      /* leave confirmed location marker as temp until pin drops - clear */
+      state.tempMark.remove();
+      state.tempMark = null;
+    }
+  }
+  state.returnToStudioAfterPick = false;
+  toast("Location pick cancelled");
 }
 
 /* ── radar anim ── */
@@ -480,10 +632,12 @@ function renderCard() {
   }
 
   const ready = !!state.image;
-  ["btn-dl", "btn-dl-2", "btn-share", "btn-pin"].forEach((id) => {
+  ["btn-dl", "btn-dl-2", "btn-share"].forEach((id) => {
     const el = $(id);
     if (el) el.disabled = !ready;
   });
+  const pinBtn = $("btn-pin");
+  if (pinBtn) pinBtn.disabled = !(ready && state.locationSet);
 }
 
 /* ── map ── */
@@ -505,24 +659,38 @@ async function ensureMap() {
   state.map = map;
   state.mapReady = true;
 
-  map.on("click", (e) => {
-    state.lat = +e.latlng.lat.toFixed(5);
-    state.lng = +e.latlng.lng.toFixed(5);
-    if ($("f-lat")) $("f-lat").value = state.lat;
-    if ($("f-lng")) $("f-lng").value = state.lng;
-    $("chip-coords").textContent = `${state.lat}, ${state.lng}`;
-    $("chip-status").textContent = "PIN TARGET";
-    if (state.tempMark) state.tempMark.remove();
-    state.tempMark = L.circleMarker([state.lat, state.lng], {
-      radius: 8,
-      color: BRAND.cyan,
-      fillColor: BRAND.cyan,
-      fillOpacity: 0.65,
-      weight: 2,
-    }).addTo(map);
+  map.on("click", async (e) => {
+    const lat = +e.latlng.lat.toFixed(5);
+    const lng = +e.latlng.lng.toFixed(5);
+    $("chip-coords").textContent = `${lat}, ${lng}`;
+    if (!state.pickMode) {
+      // not in pick mode — show coords only, don't set pin
+      $("chip-status").textContent = "EXPLORE";
+      return;
+    }
+    $("chip-status").textContent = "LOCATION PICKED";
+    let label = "Selected";
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
+        { headers: { Accept: "application/json" } }
+      );
+      const data = await res.json();
+      label =
+        data?.address?.city ||
+        data?.address?.town ||
+        data?.address?.village ||
+        data?.address?.state ||
+        data?.address?.country ||
+        "Selected";
+    } catch { /* */ }
+    setPickMarker(lat, lng, label);
+    state.map.panTo([lat, lng]);
   });
   map.on("mousemove", (e) => {
-    $("chip-coords").textContent = `${e.latlng.lat.toFixed(2)}, ${e.latlng.lng.toFixed(2)}`;
+    if (!state.pickMode) {
+      $("chip-coords").textContent = `${e.latlng.lat.toFixed(2)}, ${e.latlng.lng.toFixed(2)}`;
+    }
   });
 
   // ticker
@@ -560,16 +728,21 @@ async function searchPlace(q) {
       { headers: { Accept: "application/json" } }
     );
     const data = await res.json();
-    if (!data?.[0]) return;
-    state.lat = +data[0].lat;
-    state.lng = +data[0].lon;
-    state.city = data[0].display_name?.split(",")[0] || q;
-    if ($("f-lat")) $("f-lat").value = state.lat.toFixed(5);
-    if ($("f-lng")) $("f-lng").value = state.lng.toFixed(5);
-    if ($("f-city")) $("f-city").value = state.city;
-    state.map.flyTo([state.lat, state.lng], 10, { duration: 1.1 });
+    if (!data?.[0]) {
+      toast("Place not found");
+      return;
+    }
+    const lat = +data[0].lat;
+    const lng = +data[0].lon;
+    const label = data[0].display_name?.split(",")[0] || q;
+    state.map.flyTo([lat, lng], 10, { duration: 1.1 });
+    if (!state.pickMode) enterPickMode(true);
+    setPickMarker(lat, lng, label);
     $("chip-status").textContent = "PLACE LOCKED";
-  } catch { /* */ }
+    toast(`Found: ${label}`);
+  } catch {
+    toast("Search failed");
+  }
 }
 
 function icon(kind) {
@@ -750,19 +923,27 @@ async function shareX() {
 }
 
 async function dropPin() {
-  if (!state.image) return;
+  if (!state.image) {
+    toast("Upload a photo first");
+    return;
+  }
+  if (!state.locationSet || state.lat == null) {
+    toast("Select your location on the map first");
+    openMapPicker();
+    return;
+  }
+  if (!state.listOnMap) {
+    toast("Enable “List me on the world map”");
+    return;
+  }
   renderCard();
   const thumb = document.createElement("canvas");
   thumb.width = 160;
   thumb.height = 160;
   drawCover(thumb.getContext("2d"), state.image, { x: 0, y: 0, w: 160, h: 160 });
   const photo = thumb.toDataURL("image/jpeg", 0.75);
-  const lat = +($("f-lat")?.value || state.lat);
-  const lng = +($("f-lng")?.value || state.lng);
-  if (!state.listOnMap) {
-    alert("Enable “List me on the world map” first.");
-    return;
-  }
+  const lat = state.lat;
+  const lng = state.lng;
   const pin = {
     id: uid(),
     kind: "you",
@@ -772,7 +953,7 @@ async function dropPin() {
     idNumber: state.idNumber,
     handle: state.handle.trim(),
     team: state.team.trim(),
-    city: state.city.trim() || "World",
+    city: state.city.trim() || state.locationLabel || "World",
     bio: state.bio.trim(),
     lat,
     lng,
@@ -783,12 +964,18 @@ async function dropPin() {
   state.builders = state.builders.filter((b) => !b.isSelf);
   state.builders.push(pin);
   saveStore();
+  if (state.tempMark) {
+    state.tempMark.remove();
+    state.tempMark = null;
+  }
+  exitPickMode();
   show("tracker");
   await ensureMap();
   refreshMarkers();
   renderLog();
-  state.map.flyTo([lat, lng], 4, { duration: 1.2 });
+  state.map.flyTo([lat, lng], 5, { duration: 1.2 });
   showPin(pin);
+  toast("Builder pin dropped on map · #FrameInGoa");
 }
 
 /* ── drawers / track ── */
@@ -850,11 +1037,9 @@ function sync() {
   state.hindi = $("t-hindi").checked;
   state.stamp = $("t-qr").checked;
   state.listOnMap = $("t-list").checked;
-  if ($("f-lat").value) state.lat = +$("f-lat").value;
-  if ($("f-lng").value) state.lng = +$("f-lng").value;
-  // refresh id from name for consistency unless user regenerated recently
   renderCard();
   $("id-display").textContent = state.idNumber;
+  updateLocUI();
 }
 
 function bind() {
@@ -924,8 +1109,7 @@ function bind() {
   });
 
   $("f-title").value = state.title;
-  $("f-lat").value = state.lat.toFixed(5);
-  $("f-lng").value = state.lng.toFixed(5);
+  updateLocUI();
 
   $("reroll").onclick = () => {
     state.title = CLASSES[(Math.random() * CLASSES.length) | 0];
@@ -936,6 +1120,7 @@ function bind() {
     state.idNumber = genIdNumber(state.name + Date.now());
     $("id-display").textContent = state.idNumber;
     renderCard();
+    toast("New ID number issued");
   };
 
   $("zoom").oninput = () => {
@@ -960,23 +1145,50 @@ function bind() {
     };
   });
 
+  $("btn-pick-map").onclick = () => openMapPicker();
+  $("btn-pick-from-map").onclick = () => {
+    state.returnToStudioAfterPick = false;
+    enterPickMode(true);
+  };
+  $("btn-pick-confirm").onclick = confirmPickLocation;
+  $("btn-pick-cancel").onclick = cancelPick;
+
   $("btn-gps").onclick = () => {
-    if (!navigator.geolocation) return alert("GPS unavailable");
-    navigator.geolocation.getCurrentPosition((pos) => {
-      state.lat = pos.coords.latitude;
-      state.lng = pos.coords.longitude;
-      $("f-lat").value = state.lat.toFixed(5);
-      $("f-lng").value = state.lng.toFixed(5);
-    });
+    if (!navigator.geolocation) return toast("GPS unavailable");
+    toast("Reading GPS…");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        state.returnToStudioAfterPick = state.view === "studio";
+        if (state.view !== "tracker") show("tracker");
+        await ensureMap();
+        enterPickMode(true);
+        setPickMarker(lat, lng, "Your GPS");
+        state.map.flyTo([lat, lng], 11, { duration: 1 });
+        toast("GPS locked · Confirm location");
+      },
+      () => toast("GPS failed / denied")
+    );
   };
   $("btn-hq").onclick = () => {
-    state.lat = HQ.lat + (Math.random() - 0.5) * 0.03;
-    state.lng = HQ.lng + (Math.random() - 0.5) * 0.03;
-    $("f-lat").value = state.lat.toFixed(5);
-    $("f-lng").value = state.lng.toFixed(5);
+    const lat = HQ.lat + (Math.random() - 0.5) * 0.02;
+    const lng = HQ.lng + (Math.random() - 0.5) * 0.02;
+    state.lat = lat;
+    state.lng = lng;
+    state.locationSet = true;
+    state.locationLabel = "Near Goa HQ";
     state.city = "Goa";
-    $("f-city").value = "Goa";
+    if ($("f-city")) $("f-city").value = "Goa";
+    updateLocUI();
     renderCard();
+    toast("Location set near HH Goa HQ");
+  };
+
+  $("btn-radar-hq").onclick = () => state.map?.flyTo([HQ.lat, HQ.lng], 12, { duration: 1 });
+  $("btn-radar-me").onclick = () => {
+    if (state.locationSet) state.map?.flyTo([state.lat, state.lng], 10, { duration: 1 });
+    else $("btn-gps").click();
   };
 
   $("btn-dl").onclick = download;
@@ -995,9 +1207,84 @@ function bind() {
   };
 }
 
+/* ── global boot (Spidey-style) ── */
+function runBoot() {
+  const boot = $("boot");
+  const log = $("boot-log");
+  const fill = $("boot-fill");
+  const enter = $("btn-enter");
+  const search = $("boot-search");
+  const lines = [
+    "INITIALIZING HACKER TRACKER v2.0…",
+    "BOOTING CORE SERVICES [OK]",
+    "LOADING MAP RENDER PIPELINE…",
+    "CALIBRATING RADAR SWEEP [OK]",
+    "HYDRATING BUILDER REGISTRY…",
+    "LOCATING HH GOA HQ [LOCKED]",
+    "OPENING GLOBAL MESH…",
+    "SEARCHING FOR HACKER MAN…",
+    "ALL SYSTEMS NOMINAL",
+  ];
+  let i = 0;
+  let p = 0;
+  const stop = spinRadar($("boot-radar"), {
+    speed: 0.065,
+    dots: [
+      { a: 0.4, dist: 0.5, color: BRAND.yellow, size: 4 },
+      { a: 2.1, dist: 0.72, color: BRAND.pink, size: 3 },
+      { a: 4, dist: 0.4, color: BRAND.cyan, size: 3 },
+      { a: 5.4, dist: 0.85, color: "#00ff70", size: 3 },
+    ],
+  });
+  const phrases = [
+    "SEARCHING FOR HACKER MAN…",
+    "SCANNING WORLD MESH…",
+    "LOCKING GOA HQ…",
+    "BUILDER ID SYSTEM READY…",
+  ];
+  let pi = 0;
+  const pt = setInterval(() => {
+    pi = (pi + 1) % phrases.length;
+    search.textContent = phrases[pi];
+  }, 800);
+  const tick = () => {
+    if (i < lines.length) {
+      log.textContent += (i ? "\n" : "") + lines[i++];
+      log.scrollTop = log.scrollHeight;
+      setTimeout(tick, 95);
+    } else {
+      clearInterval(pt);
+      search.textContent = "SIGNAL LOCKED";
+      search.style.animation = "none";
+      fill.style.width = "100%";
+      enter.hidden = false;
+      stop();
+      spinRadar($("boot-radar"), {
+        speed: 0.03,
+        dots: [{ a: 1.2, dist: 0.55, color: BRAND.yellow, size: 5 }],
+      });
+    }
+  };
+  const prog = setInterval(() => {
+    p = Math.min(100, p + 2 + Math.random() * 2.5);
+    fill.style.width = p + "%";
+    if (p >= 100) clearInterval(prog);
+  }, 60);
+  tick();
+  enter.onclick = () => {
+    boot.hidden = true;
+    state.booted = true;
+    show("landing");
+  };
+}
+
 async function main() {
   loadStore();
   state.idNumber = genIdNumber("boot");
+  // hide app shells until boot finishes
+  $("landing").hidden = true;
+  $("studio").hidden = true;
+  $("tracker").hidden = true;
   bind();
   try {
     state.logos.mark = await loadImg("./public/assets/2-47.svg");
@@ -1016,11 +1303,27 @@ async function main() {
   }
   $("id-display").textContent = state.idNumber;
   renderCard();
+  updateLocUI();
 
-  // deep link ?studio or ?map
   const q = new URLSearchParams(location.search);
-  if (q.get("map") === "1") show("tracker");
-  else if (q.get("studio") === "1") show("studio");
+  if (q.get("skipboot") === "1") {
+    $("boot").hidden = true;
+    state.booted = true;
+    if (q.get("map") === "1") show("tracker");
+    else if (q.get("studio") === "1") show("studio");
+    else show("landing");
+  } else {
+    runBoot();
+    // remember intended deep link after boot
+    $("btn-enter").addEventListener(
+      "click",
+      () => {
+        if (q.get("map") === "1") show("tracker");
+        else if (q.get("studio") === "1") show("studio");
+      },
+      { once: true }
+    );
+  }
 }
 
 main();

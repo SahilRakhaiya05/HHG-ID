@@ -215,12 +215,20 @@
         </div>
 
         <div class="pin-opts">
-          <p class="sec">Map pin</p>
+          <p class="sec">Map location</p>
+          <div class="loc-status" id="loc-status">
+            <span class="loc-dot"></span>
+            <div>
+              <strong id="loc-label">No location selected</strong>
+              <small id="loc-coords">Pick on map before pinning</small>
+            </div>
+          </div>
           <label class="check"><input type="checkbox" id="t-list" checked /> List me on the world map</label>
           <div class="field-2">
-            <input id="f-lat" type="number" step="any" placeholder="Lat" />
-            <input id="f-lng" type="number" step="any" placeholder="Lng" />
+            <input id="f-lat" type="number" step="any" placeholder="Lat" readonly />
+            <input id="f-lng" type="number" step="any" placeholder="Lng" readonly />
           </div>
+          <button type="button" class="btn btn-y full" id="btn-pick-map">① Select location on map</button>
           <div class="btn-row">
             <button type="button" class="btn btn-sm btn-ghost" id="btn-gps">Use GPS</button>
             <button type="button" class="btn btn-sm btn-ghost" id="btn-hq">Near Goa HQ</button>
@@ -229,7 +237,7 @@
 
         <div class="form-actions">
           <button type="button" class="btn btn-y" id="btn-share" disabled>Share X · #FrameInGoa</button>
-          <button type="button" class="btn btn-ghost" id="btn-pin" disabled>Drop pin on map</button>
+          <button type="button" class="btn btn-ghost" id="btn-pin" disabled>② Confirm pin on map</button>
         </div>
       </aside>
 
@@ -251,13 +259,13 @@
     </div>
   </div>
 
-  <!-- ========== MAP TRACKER ========== -->
+  <!-- ========== MAP TRACKER (Spidey-style) ========== -->
   <div id="tracker" class="tracker" hidden>
     <header class="tracker-bar">
       <button type="button" class="back" id="btn-from-map">← Studio</button>
       <div class="tracker-title">
         <span class="live"><i></i> LIVE</span>
-        <strong>Hacker Tracker</strong>
+        <strong>HACKER TRACKER v2</strong>
       </div>
       <div class="tracker-actions">
         <button type="button" class="btn btn-sm btn-ghost" id="btn-world">World</button>
@@ -268,35 +276,69 @@
 
     <div class="tracker-stage">
       <div class="device">
+        <div class="frame-corners" aria-hidden="true">
+          <span class="fc tl"></span><span class="fc tr"></span>
+          <span class="fc bl"></span><span class="fc br"></span>
+        </div>
         <div id="map" class="map"></div>
         <div class="hud-grid" aria-hidden="true"></div>
+        <div class="scanline-overlay" aria-hidden="true"></div>
+
         <div class="hud-top">
           <div class="chip"><i class="pulse"></i> <span id="chip-status">SCANNING</span></div>
           <div class="chip chip-y" id="chip-count">0 ON MAP</div>
           <div class="chip" id="chip-coords">—</div>
         </div>
         <div class="ticker"><div class="ticker-inner" id="ticker"></div></div>
+
+        <!-- LOCATION PICK MODE BANNER -->
+        <div id="pick-banner" class="pick-banner" hidden>
+          <div class="pick-banner-inner">
+            <div class="pick-copy">
+              <strong id="pick-title">SELECT LOCATION</strong>
+              <span id="pick-sub">Tap the map · search a city · or use GPS</span>
+            </div>
+            <div class="pick-actions">
+              <button type="button" class="btn btn-sm btn-ghost" id="btn-pick-cancel">Cancel</button>
+              <button type="button" class="btn btn-sm btn-y" id="btn-pick-confirm" disabled>Confirm location</button>
+            </div>
+          </div>
+          <div class="pick-selected" id="pick-selected" hidden>
+            <span>📍</span>
+            <span id="pick-selected-text">—</span>
+          </div>
+        </div>
+
         <aside class="legend">
           <div><b class="d-hq"></b> HH GOA HQ</div>
           <div><b class="d-you"></b> YOU</div>
           <div><b class="d-builder"></b> BUILDER</div>
           <div><b class="d-radar"></b> RADAR TEAM</div>
+          <div><b class="d-pick"></b> SELECTED</div>
         </aside>
         <div class="radar-box">
           <canvas id="mini-radar" width="110" height="110"></canvas>
+          <div class="radar-btns">
+            <button type="button" id="btn-radar-hq" title="HQ">⌂</button>
+            <button type="button" id="btn-radar-me" title="GPS">◎</button>
+          </div>
         </div>
         <div class="map-search">
           <input id="loc-search" type="search" placeholder="Search any city on Earth…" />
-          <p>Tap map to set your pin coordinates</p>
+          <p id="map-hint">Explore · or enter SELECT LOCATION mode from Studio</p>
         </div>
         <div class="dock">
           <button type="button" class="dock-btn" id="btn-log">LOG</button>
           <button type="button" class="dock-btn" id="btn-radar">RADAR</button>
           <button type="button" class="dock-btn" id="btn-track">TRACK</button>
+          <button type="button" class="dock-btn primary" id="btn-pick-from-map">LOCATE</button>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- toast -->
+  <div id="toast" class="toast" hidden></div>
 
   <!-- panels -->
   <div id="backdrop" class="backdrop" hidden></div>
@@ -344,14 +386,19 @@
     </div>
   </div>
 
-  <!-- boot overlay when entering tracker first time -->
-  <div id="boot" class="boot" hidden>
+  <!-- GLOBAL BOOT (Spidey-style) -->
+  <div id="boot" class="boot">
     <div class="boot-box">
+      <div class="boot-brand-row">
+        <img src="./public/assets/2-47.svg" alt="" width="36" height="36" />
+        <span>HACKER TRACKER v2.0</span>
+      </div>
       <pre id="boot-log"></pre>
-      <canvas id="boot-radar" width="160" height="160"></canvas>
+      <canvas id="boot-radar" width="180" height="180"></canvas>
       <p id="boot-search">SEARCHING FOR HACKER MAN…</p>
       <div class="boot-bar"><i id="boot-fill"></i></div>
-      <button type="button" class="btn btn-y" id="btn-enter" hidden>Enter map</button>
+      <p class="boot-foot" id="boot-foot">HH GOA 2026 · WORLD MESH</p>
+      <button type="button" class="btn btn-y" id="btn-enter" hidden>ENTER SYSTEM →</button>
     </div>
   </div>
 
