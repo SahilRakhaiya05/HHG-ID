@@ -2,268 +2,335 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-  <title>Hacker Tracker · HH Goa 2026 · #FrameInGoa</title>
-  <meta name="description" content="World map of builders. Mint VIP ID / Boarding Pass / PFP. Drop your pin anywhere. W Celeb Radar. #FrameInGoa" />
-  <meta property="og:title" content="Hacker Tracker · HH Goa 2026" />
-  <meta property="og:description" content="Search for Hacker Man. Mint your Builder ID. List on the world map. #FrameInGoa" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>HH Goa 2026 · Builder ID</title>
+  <meta name="description" content="Mint your Hacker House Goa 2026 Builder ID. Preview, download, pin on the world map, share with #FrameInGoa." />
+  <meta property="og:title" content="HH Goa 2026 · Builder ID" />
+  <meta property="og:description" content="Official-style Builder ID for Hacker House Goa. #FrameInGoa" />
   <meta name="theme-color" content="#0B6839" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Imbue:opsz,wght@10..100,500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Imbue:opsz,wght@10..100,500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <!-- BOOT -->
-  <div id="preloader" class="preloader">
-    <div class="boot-device">
-      <div class="boot-screen">
-        <div class="scanlines"></div>
-        <div class="boot-brand">
-          <img src="./public/assets/2-47.svg" alt="" width="40" height="40" />
-          <span>2:47 PM · HH GOA 2026</span>
-        </div>
-        <pre class="boot-log" id="boot-log"></pre>
-        <div class="boot-radar-wrap">
-          <canvas id="boot-radar" width="200" height="200"></canvas>
-        </div>
-        <p class="boot-search" id="boot-search">SEARCHING FOR HACKER MAN…</p>
-        <div class="boot-bar"><i id="boot-fill"></i></div>
-        <p class="boot-hint" id="boot-hint">World mesh · AI × Crypto · #FrameInGoa</p>
-        <button type="button" class="btn-enter" id="btn-enter" hidden>ENTER TRACKER ✦</button>
-      </div>
+  <!-- ========== LANDING ========== -->
+  <div id="landing" class="landing">
+    <div class="land-bg" aria-hidden="true">
+      <img src="./public/assets/Sun-rise.png" alt="" class="land-sunrise" />
+      <div class="land-wash"></div>
+      <div class="land-grid"></div>
     </div>
-  </div>
 
-  <!-- APP -->
-  <div id="app" class="app" hidden>
-    <header class="topbar">
-      <a class="tb-brand" href="https://hhgoa.com/" target="_blank" rel="noopener">
+    <header class="land-nav">
+      <a class="nav-brand" href="https://hhgoa.com/" target="_blank" rel="noopener">
         <img src="./public/assets/2-47.svg" alt="2:47" />
-        <div>
-          <small>2:47 PM STUDIO</small>
-          <strong>HACKER TRACKER</strong>
-        </div>
+        <span>2:47 PM STUDIO</span>
       </a>
-      <div class="tb-center">
-        <span class="live"><i></i> LIVE WORLD MAP</span>
-        <span id="tb-count">0 builders tracked</span>
-      </div>
-      <div class="tb-actions">
-        <a href="https://hacker-house-goa-2026.devfolio.co/" target="_blank" rel="noopener" class="tb-link">Devfolio ↗</a>
-        <button type="button" class="tb-btn" data-open="radar">W CELEB RADAR</button>
-      </div>
+      <nav class="nav-links">
+        <a href="#how">How it works</a>
+        <a href="#map-teaser">Map</a>
+        <a href="https://hacker-house-goa-2026.devfolio.co/" target="_blank" rel="noopener">Devfolio ↗</a>
+        <button type="button" class="nav-cta" id="btn-start-top">Mint ID</button>
+      </nav>
     </header>
 
-    <div class="stage">
-      <div class="device">
-        <div class="device-bezel">
-          <div class="device-screen">
-            <div id="map" class="map"></div>
-            <div class="hud-grid" aria-hidden="true"></div>
-
-            <div class="hud-top">
-              <div class="chip"><i class="pulse"></i> <span id="chip-status">SCANNING</span></div>
-              <div class="chip chip-y" id="chip-count">0 ON MAP</div>
-              <div class="chip chip-outline" id="chip-coords">—</div>
-            </div>
-
-            <div class="ticker"><div class="ticker-inner" id="ticker"></div></div>
-
-            <aside class="legend">
-              <div><b class="d-hq"></b> HH GOA HQ</div>
-              <div><b class="d-you"></b> YOU</div>
-              <div><b class="d-builder"></b> BUILDER</div>
-              <div><b class="d-radar"></b> W CELEB</div>
-              <div><b class="d-rumor"></b> SIGNAL</div>
-            </aside>
-
-            <div class="radar-box">
-              <canvas id="mini-radar" width="110" height="110"></canvas>
-              <div class="radar-btns">
-                <button type="button" id="btn-world" title="World">🌍</button>
-                <button type="button" id="btn-hq" title="HQ Goa">⌂</button>
-                <button type="button" id="btn-me" title="My GPS">◎</button>
-              </div>
-            </div>
-
-            <div class="map-tools">
-              <label class="search-loc">
-                <input id="loc-search" type="search" placeholder="Search city / pin world…" autocomplete="off" />
-              </label>
-              <p class="map-hint">Tap map to place your pin · anywhere on Earth</p>
-            </div>
-
-            <nav class="dock">
-              <button type="button" data-open="mint" class="dock-btn primary">MINT ID</button>
-              <button type="button" data-open="log" class="dock-btn">LOG</button>
-              <button type="button" data-open="radar" class="dock-btn">RADAR</button>
-              <button type="button" data-open="track" class="dock-btn">TRACK</button>
-              <button type="button" data-open="help" class="dock-btn">?</button>
-            </nav>
-          </div>
-        </div>
+    <section class="hero">
+      <p class="eyebrow">HACKER HOUSE GOA 2026 · TASK #1</p>
+      <h1>
+        Build your<br />
+        <em>Builder ID</em>
+      </h1>
+      <p class="hero-lead">
+        Upload a photo. Get a clean HH Goa 2026 identity card with your name, stack,
+        unique ID number, and class. Preview live. Download. Pin yourself on the world map.
+        Share on X with <strong>#FrameInGoa</strong>.
+      </p>
+      <div class="hero-actions">
+        <button type="button" class="btn btn-y" id="btn-start">Start minting →</button>
+        <button type="button" class="btn btn-ghost" id="btn-start-map">Open tracker map</button>
       </div>
-    </div>
+      <div class="hero-stats">
+        <div><b>247</b><span>Builders</span></div>
+        <div><b>4</b><span>Days</span></div>
+        <div><b>28–31</b><span>Oct 2026</span></div>
+        <div><b>Goa</b><span>India</span></div>
+      </div>
+    </section>
 
-    <footer class="foot">
-      <span>28–31 OCT 2026 · GOA</span>
+    <section class="hero-card-preview" aria-hidden="true">
+      <div class="float-card">
+        <div class="fc-top">
+          <span>BUILDER ID</span>
+          <span class="fc-id">HHG-2026-A7F3</span>
+        </div>
+        <div class="fc-photo"></div>
+        <div class="fc-body">
+          <p class="fc-label">NAME</p>
+          <p class="fc-name">YOUR NAME</p>
+          <p class="fc-label">STACK</p>
+          <p class="fc-stack">Full-stack · AI</p>
+          <p class="fc-class">Terminal Surfer</p>
+        </div>
+        <div class="fc-foot">#FrameInGoa · GOA 2026</div>
+      </div>
+    </section>
+
+    <section class="how" id="how">
+      <h2>How it works</h2>
+      <div class="how-grid">
+        <article>
+          <span class="step">01</span>
+          <h3>Upload</h3>
+          <p>Any photo — portrait, landscape, phone HEIC. We fit it for you.</p>
+        </article>
+        <article>
+          <span class="step">02</span>
+          <h3>Customize</h3>
+          <p>Name, stack, city, handle, builder class, bio. Live preview updates instantly.</p>
+        </article>
+        <article>
+          <span class="step">03</span>
+          <h3>Get ID</h3>
+          <p>Unique ID number, barcode, HH branding. Download PNG in one click.</p>
+        </article>
+        <article>
+          <span class="step">04</span>
+          <h3>Share & pin</h3>
+          <p>Post with #FrameInGoa. Drop your pin on the world map from anywhere.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="map-teaser" id="map-teaser">
+      <div class="map-teaser-copy">
+        <p class="eyebrow">WORLD MAP</p>
+        <h2>Hackers can be anywhere</h2>
+        <p>HH Goa HQ is locked in Goa. Your pin can land on any city on Earth. Track builders, rumored signals, and W Celeb Radar teams.</p>
+        <button type="button" class="btn btn-y" id="btn-start-2">Mint & pin →</button>
+      </div>
+      <div class="map-teaser-art">
+        <img src="./public/assets/hacker-man-ref.jpg" alt="Tracker map concept" />
+      </div>
+    </section>
+
+    <section class="tagline">
+      <img src="./public/assets/goa_hindi.svg" alt="Goa" class="goa-mark" />
+      <h2>Less noise. More signal.</h2>
+      <p>28–31 October 2026 · Private beach residency · Powered by 2:47 PM Studio</p>
+    </section>
+
+    <footer class="land-foot">
+      <span>© 2026 HH-Goa</span>
+      <a href="https://hhgoa.com/" target="_blank" rel="noopener">hhgoa.com</a>
+      <a href="https://x.com/247pmstudio" target="_blank" rel="noopener">@247pmstudio</a>
       <strong>#FrameInGoa</strong>
-      <span>LESS NOISE · MORE SIGNAL</span>
     </footer>
   </div>
 
-  <div id="backdrop" class="backdrop" hidden></div>
-
-  <!-- MINT PANEL -->
-  <aside id="panel-mint" class="drawer" hidden>
-    <header class="drawer-h">
-      <h2>MINT · CUSTOMIZE</h2>
-      <button type="button" class="x" data-close>×</button>
+  <!-- ========== STUDIO (mint + preview) ========== -->
+  <div id="studio" class="studio" hidden>
+    <header class="studio-bar">
+      <button type="button" class="back" id="btn-home">← Home</button>
+      <div class="studio-title">
+        <img src="./public/assets/2-47.svg" alt="" />
+        <span>Builder ID Studio</span>
+      </div>
+      <div class="studio-actions">
+        <button type="button" class="btn btn-sm btn-ghost" id="btn-open-map">Map</button>
+        <button type="button" class="btn btn-sm btn-y" id="btn-dl" disabled>Download</button>
+      </div>
     </header>
-    <div class="drawer-b">
-      <div class="fmt-grid" id="fmt-grid">
-        <button type="button" class="fmt on" data-fmt="vip">VIP ID<br /><small>1080×1350</small></button>
-        <button type="button" class="fmt" data-fmt="boarding">BOARDING<br /><small>1080×566</small></button>
-        <button type="button" class="fmt" data-fmt="pfp">PFP FRAME<br /><small>1080×1080</small></button>
-        <button type="button" class="fmt" data-fmt="team">TEAM CARD<br /><small>1200×630</small></button>
-      </div>
 
-      <div class="drop" id="drop">
-        <input type="file" id="file" accept="image/*,.heic,.heif" hidden />
-        <div id="drop-empty"><strong>UPLOAD PHOTO</strong><span>JPG · PNG · HEIC · any ratio</span></div>
-        <div id="drop-has" hidden>
-          <img id="thumb" alt="" />
-          <button type="button" class="link" id="rephoto">Change photo</button>
+    <div class="studio-grid">
+      <!-- LEFT: form -->
+      <aside class="studio-form">
+        <h2>Your details</h2>
+
+        <div class="drop" id="drop" tabindex="0">
+          <input type="file" id="file" accept="image/*,.heic,.heif" hidden />
+          <div id="drop-empty">
+            <div class="drop-icon">↑</div>
+            <strong>Upload photo</strong>
+            <span>JPG · PNG · WEBP · HEIC</span>
+          </div>
+          <div id="drop-has" hidden>
+            <img id="thumb" alt="Upload" />
+            <button type="button" class="link" id="rephoto">Change photo</button>
+          </div>
         </div>
-      </div>
 
-      <div class="form-grid">
-        <label>Name <input id="f-name" maxlength="40" placeholder="Your name" /></label>
-        <label>Stack / Role <input id="f-stack" maxlength="48" placeholder="Solidity · Design · Full-stack" /></label>
-        <label>Builder class
-          <div class="row">
-            <input id="f-title" maxlength="48" />
-            <button type="button" id="reroll" class="icon">↻</button>
+        <label class="field">Full name
+          <input id="f-name" maxlength="40" placeholder="As you want on the card" autocomplete="name" />
+        </label>
+        <label class="field">Stack / role
+          <input id="f-stack" maxlength="48" placeholder="e.g. Solidity · Full-stack · Design" />
+        </label>
+        <label class="field">Builder class
+          <div class="field-row">
+            <input id="f-title" maxlength="40" />
+            <button type="button" class="icon-btn" id="reroll" title="New class">↻</button>
           </div>
         </label>
-        <label>X handle <input id="f-handle" maxlength="32" placeholder="@you" /></label>
-        <label>Team <input id="f-team" maxlength="40" placeholder="Team name (optional)" /></label>
-        <label>City / base <input id="f-city" maxlength="40" placeholder="Where you build from" /></label>
-        <label class="full">Bio line <input id="f-bio" maxlength="80" placeholder="One line flex · ship or ship" /></label>
-      </div>
-
-      <div class="custom-block">
-        <p class="sec">LOOK</p>
-        <div class="chips" id="accent-chips">
-          <button type="button" class="swatch on" data-accent="yellow" style="--c:#FEE101"></button>
-          <button type="button" class="swatch" data-accent="pink" style="--c:#ff2d84"></button>
-          <button type="button" class="swatch" data-accent="cyan" style="--c:#7dffc8"></button>
-          <button type="button" class="swatch" data-accent="white" style="--c:#fafaf8"></button>
+        <div class="field-2">
+          <label class="field">X handle
+            <input id="f-handle" maxlength="32" placeholder="@you" />
+          </label>
+          <label class="field">City
+            <input id="f-city" maxlength="40" placeholder="Where you build" />
+          </label>
         </div>
-        <div class="chips" id="theme-chips">
-          <button type="button" class="pill on" data-theme="classic">Classic green</button>
-          <button type="button" class="pill" data-theme="night">Night</button>
-          <button type="button" class="pill" data-theme="sunrise">Sunrise</button>
-        </div>
-        <div class="toggles">
-          <label><input type="checkbox" id="t-holo" checked /> Hologram seal</label>
-          <label><input type="checkbox" id="t-barcode" checked /> Barcode</label>
-          <label><input type="checkbox" id="t-hindi" checked /> गोवा mark</label>
-          <label><input type="checkbox" id="t-lanyard" checked /> Lanyard (VIP)</label>
-        </div>
-      </div>
+        <label class="field">Team <span class="opt">(optional)</span>
+          <input id="f-team" maxlength="40" placeholder="Team name" />
+        </label>
+        <label class="field">One-liner
+          <input id="f-bio" maxlength="72" placeholder="Ship or ship · Less noise more signal" />
+        </label>
 
-      <div class="crop-block">
-        <p class="sec">PHOTO FIT</p>
-        <label>Zoom <input type="range" id="zoom" min="1" max="2.5" step="0.01" value="1.1" /></label>
-        <label>Pan X <input type="range" id="panx" min="-45" max="45" step="1" value="0" /></label>
-        <label>Pan Y <input type="range" id="pany" min="-45" max="45" step="1" value="0" /></label>
-        <label>Rotate <input type="range" id="rot" min="-15" max="15" step="1" value="0" /></label>
-      </div>
-
-      <div class="pin-block">
-        <p class="sec">MAP PIN (ANYWHERE)</p>
-        <label class="check"><input type="checkbox" id="t-list" checked /> List me on world map</label>
-        <div class="row">
-          <input id="f-lat" type="number" step="any" placeholder="Lat" />
-          <input id="f-lng" type="number" step="any" placeholder="Lng" />
+        <div class="id-box">
+          <span>Your ID number</span>
+          <strong id="id-display">HHG-2026-····</strong>
+          <button type="button" class="link" id="regen-id">Regenerate</button>
         </div>
-        <div class="row">
-          <button type="button" class="btn ghost sm" id="btn-gps">Use my GPS</button>
-          <button type="button" class="btn ghost sm" id="btn-use-hq">Pin near HQ</button>
+
+        <div class="crop">
+          <p class="sec">Photo fit</p>
+          <label>Zoom <input type="range" id="zoom" min="1" max="2.4" step="0.01" value="1.1" /></label>
+          <label>Pan X <input type="range" id="panx" min="-40" max="40" step="1" value="0" /></label>
+          <label>Pan Y <input type="range" id="pany" min="-40" max="40" step="1" value="0" /></label>
         </div>
-        <p class="tiny">Or tap the map to set coords, then Drop pin.</p>
-      </div>
 
-      <div class="preview">
-        <canvas id="canvas" width="1080" height="1350"></canvas>
-      </div>
+        <div class="look">
+          <p class="sec">Look</p>
+          <div class="swatches" id="swatches">
+            <button type="button" class="sw on" data-a="yellow" style="--c:#FEE101" title="Yellow"></button>
+            <button type="button" class="sw" data-a="lime" style="--c:#b8ff3c" title="Lime"></button>
+            <button type="button" class="sw" data-a="cyan" style="--c:#7dffc8" title="Cyan"></button>
+            <button type="button" class="sw" data-a="cream" style="--c:#f5edd6" title="Cream"></button>
+          </div>
+          <label class="check"><input type="checkbox" id="t-barcode" checked /> Barcode strip</label>
+          <label class="check"><input type="checkbox" id="t-hindi" checked /> Show गोवा</label>
+          <label class="check"><input type="checkbox" id="t-qr" checked /> ID stamp</label>
+        </div>
 
-      <div class="actions">
-        <button type="button" class="btn solid" id="btn-dl" disabled>Download PNG</button>
-        <button type="button" class="btn accent" id="btn-share" disabled>Share X · #FrameInGoa</button>
-        <button type="button" class="btn ghost" id="btn-pin" disabled>Drop pin on map</button>
+        <div class="pin-opts">
+          <p class="sec">Map pin</p>
+          <label class="check"><input type="checkbox" id="t-list" checked /> List me on the world map</label>
+          <div class="field-2">
+            <input id="f-lat" type="number" step="any" placeholder="Lat" />
+            <input id="f-lng" type="number" step="any" placeholder="Lng" />
+          </div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-sm btn-ghost" id="btn-gps">Use GPS</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="btn-hq">Near Goa HQ</button>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-y" id="btn-share" disabled>Share X · #FrameInGoa</button>
+          <button type="button" class="btn btn-ghost" id="btn-pin" disabled>Drop pin on map</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT: live preview -->
+      <section class="studio-preview">
+        <div class="preview-head">
+          <h2>Live preview</h2>
+          <span class="preview-meta">1080 × 1350 · PNG</span>
+        </div>
+        <div class="preview-stage">
+          <div class="preview-glow"></div>
+          <canvas id="canvas" width="1080" height="1350" aria-label="Builder ID preview"></canvas>
+        </div>
+        <p class="preview-hint">Updates as you type · no login · client-side only</p>
+        <div class="preview-actions">
+          <button type="button" class="btn btn-y" id="btn-dl-2" disabled>Download PNG</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ========== MAP TRACKER ========== -->
+  <div id="tracker" class="tracker" hidden>
+    <header class="tracker-bar">
+      <button type="button" class="back" id="btn-from-map">← Studio</button>
+      <div class="tracker-title">
+        <span class="live"><i></i> LIVE</span>
+        <strong>Hacker Tracker</strong>
+      </div>
+      <div class="tracker-actions">
+        <button type="button" class="btn btn-sm btn-ghost" id="btn-world">World</button>
+        <button type="button" class="btn btn-sm btn-ghost" id="btn-goa">HQ</button>
+        <button type="button" class="btn btn-sm btn-y" id="btn-mint-from-map">Mint ID</button>
+      </div>
+    </header>
+
+    <div class="tracker-stage">
+      <div class="device">
+        <div id="map" class="map"></div>
+        <div class="hud-grid" aria-hidden="true"></div>
+        <div class="hud-top">
+          <div class="chip"><i class="pulse"></i> <span id="chip-status">SCANNING</span></div>
+          <div class="chip chip-y" id="chip-count">0 ON MAP</div>
+          <div class="chip" id="chip-coords">—</div>
+        </div>
+        <div class="ticker"><div class="ticker-inner" id="ticker"></div></div>
+        <aside class="legend">
+          <div><b class="d-hq"></b> HH GOA HQ</div>
+          <div><b class="d-you"></b> YOU</div>
+          <div><b class="d-builder"></b> BUILDER</div>
+          <div><b class="d-radar"></b> RADAR TEAM</div>
+        </aside>
+        <div class="radar-box">
+          <canvas id="mini-radar" width="110" height="110"></canvas>
+        </div>
+        <div class="map-search">
+          <input id="loc-search" type="search" placeholder="Search any city on Earth…" />
+          <p>Tap map to set your pin coordinates</p>
+        </div>
+        <div class="dock">
+          <button type="button" class="dock-btn" id="btn-log">LOG</button>
+          <button type="button" class="dock-btn" id="btn-radar">RADAR</button>
+          <button type="button" class="dock-btn" id="btn-track">TRACK</button>
+        </div>
       </div>
     </div>
-  </aside>
+  </div>
 
-  <!-- LOG -->
+  <!-- panels -->
+  <div id="backdrop" class="backdrop" hidden></div>
+
   <aside id="panel-log" class="drawer" hidden>
-    <header class="drawer-h"><h2>ACTIVITY LOG</h2><button type="button" class="x" data-close>×</button></header>
+    <header><h2>Activity log</h2><button type="button" data-close class="x">×</button></header>
     <div class="drawer-b"><ul class="log" id="log-list"></ul></div>
   </aside>
 
-  <!-- W CELEB RADAR -->
   <aside id="panel-radar" class="drawer wide" hidden>
-    <header class="drawer-h">
-      <h2>W CELEB RADAR</h2>
-      <button type="button" class="x" data-close>×</button>
-    </header>
+    <header><h2>W Celeb Radar</h2><button type="button" data-close class="x">×</button></header>
     <div class="drawer-b">
-      <p class="lead">Task #1 board · every team ranked by score. Tap a row to fly the map.</p>
+      <p class="lead">Task #1 board · ranked by score. Tap a row to fly the map.</p>
       <div class="table-wrap">
         <table class="radar-table" id="radar-table">
-          <thead>
-            <tr><th>#</th><th>Name</th><th>X</th><th>Views</th><th>Score</th><th></th></tr>
-          </thead>
+          <thead><tr><th>#</th><th>Name</th><th>X</th><th>Views</th><th>Score</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
     </div>
   </aside>
 
-  <!-- TRACK -->
   <aside id="panel-track" class="drawer" hidden>
-    <header class="drawer-h"><h2>TRACK HACKER MAN</h2><button type="button" class="x" data-close>×</button></header>
+    <header><h2>Track Hacker Man</h2><button type="button" data-close class="x">×</button></header>
     <div class="drawer-b track">
       <div class="track-stage">
         <canvas id="track-radar" width="260" height="260"></canvas>
         <img src="./public/assets/hacker-man-ref.jpg" alt="" class="ghost" id="ghost" />
       </div>
-      <p class="track-msg" id="track-msg">Ready to sweep the planet…</p>
-      <button type="button" class="btn accent" id="btn-sweep">RUN WORLD SWEEP</button>
+      <p class="track-msg" id="track-msg">Ready to sweep…</p>
+      <button type="button" class="btn btn-y" id="btn-sweep">Run world sweep</button>
     </div>
   </aside>
 
-  <!-- HELP -->
-  <aside id="panel-help" class="drawer" hidden>
-    <header class="drawer-h"><h2>HELP</h2><button type="button" class="x" data-close>×</button></header>
-    <div class="drawer-b help">
-      <ol>
-        <li><b>MINT ID</b> — 4 formats (VIP, Boarding, PFP, Team) + full look controls.</li>
-        <li><b>WORLD MAP</b> — tap anywhere or search a city; hackers can pin from any country.</li>
-        <li><b>DROP PIN</b> — list your Builder ID on the live map.</li>
-        <li><b>RADAR</b> — full W Celeb Task #1 leaderboard.</li>
-        <li><b>SHARE</b> — X caption always includes <b>#FrameInGoa</b>.</li>
-      </ol>
-      <p>HH Goa HQ · private beach residency · 28–31 Oct 2026 · 247 builders.</p>
-      <a class="btn solid" href="https://forms.gle/jM5hTaGvsrfEBagPA" target="_blank" rel="noopener">Submit form ↗</a>
-    </div>
-  </aside>
-
-  <!-- pin card -->
   <div id="pin-card" class="pin-card" hidden>
     <button type="button" id="pin-x" class="pin-x">×</button>
     <img id="pin-img" alt="" />
@@ -272,7 +339,19 @@
       <h3 id="pin-name">—</h3>
       <p id="pin-meta">—</p>
       <p id="pin-title" class="pt">—</p>
+      <p id="pin-idnum" class="pid"></p>
       <a id="pin-link" href="#" target="_blank" rel="noopener" hidden>Open post ↗</a>
+    </div>
+  </div>
+
+  <!-- boot overlay when entering tracker first time -->
+  <div id="boot" class="boot" hidden>
+    <div class="boot-box">
+      <pre id="boot-log"></pre>
+      <canvas id="boot-radar" width="160" height="160"></canvas>
+      <p id="boot-search">SEARCHING FOR HACKER MAN…</p>
+      <div class="boot-bar"><i id="boot-fill"></i></div>
+      <button type="button" class="btn btn-y" id="btn-enter" hidden>Enter map</button>
     </div>
   </div>
 
