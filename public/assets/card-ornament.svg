@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#fff8b0"/>
+      <stop offset="40%" stop-color="#fee101"/>
+      <stop offset="100%" stop-color="#c4a800"/>
+    </linearGradient>
+  </defs>
+  <!-- corner ornament -->
+  <path d="M8 28 V12 H28" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linecap="square"/>
+  <path d="M8 20 H16 V12" fill="none" stroke="url(#gold)" stroke-width="2"/>
+  <circle cx="14" cy="18" r="3" fill="url(#gold)"/>
+  <path d="M72 12 H88 V28" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linecap="square"/>
+  <path d="M12 72 V88 H28" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linecap="square"/>
+  <path d="M72 88 H88 V72" fill="none" stroke="url(#gold)" stroke-width="4" stroke-linecap="square"/>
+</svg>

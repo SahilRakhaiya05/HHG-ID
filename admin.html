@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Hacker Tracker · Admin</title>
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#061326" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="admin-shell">
+    <div id="login" class="admin-login">
+      <div class="boot-title" style="margin:0 auto 8px">
+        <img src="./public/assets/hacker-tracker-mark.svg" alt="" width="24" height="24" />
+        ADMIN
+      </div>
+      <h1>Pin control</h1>
+      <p style="margin:0;font-size:13px;color:rgba(197,224,232,.6);font-family:Space Grotesk,sans-serif">
+        Manage builder pins on the map. Password from <code style="color:var(--y)">config.js</code>.
+      </p>
+      <label class="field">Password
+        <input id="pw" type="password" placeholder="Admin password" autocomplete="current-password" />
+      </label>
+      <button type="button" class="btn btn-y" id="btn-login">Enter console</button>
+      <a href="./index.html" class="link-btn" style="text-align:center">← Back to tracker</a>
+    </div>
+
+    <div id="panel" class="admin-wrap" hidden>
+      <div class="console-device" style="min-height:auto;padding:28px 20px 16px;margin-bottom:0">
+        <div class="wordmark-hang" style="position:static;transform:none;margin-bottom:12px">
+          <img src="./public/assets/wordmark-badge.svg" alt="Hacker Tracker" class="wordmark-img" style="width:220px;margin:0 auto" />
+        </div>
+        <div class="console-screen" style="overflow:auto;min-height:420px;padding:16px">
+          <header class="topnav" style="padding:0 0 12px;margin-bottom:12px">
+            <div class="brand">
+              <img src="./public/assets/2-47.svg" width="28" height="28" alt="" />
+              <span>PIN ADMIN</span>
+            </div>
+            <div class="topnav-actions">
+              <span id="status" style="font-size:11px;color:rgba(197,224,232,.5)"></span>
+              <button type="button" class="btn btn-sm btn-ghost" id="btn-refresh">Refresh</button>
+              <a class="btn btn-sm btn-y" href="./index.html">Tracker</a>
+            </div>
+          </header>
+
+          <p style="font-family:Space Grotesk,sans-serif;font-size:14px;color:rgba(197,224,232,.7);margin:0 0 16px">
+            Hide or delete pins. Hidden pins leave the public map. Local-only pins show when Supabase is not configured.
+          </p>
+
+          <div style="overflow:auto;border-radius:10px;border:2px solid rgba(86,216,239,.3)">
+            <table class="admin-table" id="table">
+              <thead>
+                <tr>
+                  <th>Photo</th>
+                  <th>Name</th>
+                  <th>Title</th>
+                  <th>City</th>
+                  <th>Coords</th>
+                  <th>Visible</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="./config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./admin.js" type="module"></script>
+</body>
+</html>

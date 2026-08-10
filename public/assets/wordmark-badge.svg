@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 56" role="img" aria-label="Hacker Tracker">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0e3d5c"/>
+      <stop offset="100%" stop-color="#082538"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="316" height="52" rx="8" fill="url(#g)" stroke="#56d8ef" stroke-width="3"/>
+  <rect x="6" y="6" width="308" height="44" rx="5" fill="none" stroke="#1a5a78" stroke-width="1"/>
+  <text x="88" y="35" font-family="Courier New, monospace" font-size="18" font-weight="700" fill="#e9ffc5" letter-spacing="2">HACKER</text>
+  <!-- radar disc -->
+  <circle cx="160" cy="28" r="16" fill="#0b6839" stroke="#fee101" stroke-width="2"/>
+  <circle cx="160" cy="28" r="10" fill="none" stroke="#7dffc8" stroke-width="1.5"/>
+  <circle cx="160" cy="28" r="4" fill="#fee101"/>
+  <path d="M160 28 L172 18" stroke="#56d8ef" stroke-width="2"/>
+  <text x="182" y="35" font-family="Courier New, monospace" font-size="18" font-weight="700" fill="#56d8ef" letter-spacing="2">TRACKER</text>
+</svg>
