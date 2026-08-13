@@ -44,3 +44,10 @@ recon-*.js
 
 # Optional large local refs (keep public/assets)
 # images (3).jpg is product ref — keep if needed
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Service role / local env already covered by .env.*

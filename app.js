@@ -1,6 +1,7 @@
 /**
  * HH Goa 2026 · Frame In Goa
- * Format A: PFP · Format B: Builder ID · Map pins · Supabase / localStorage
+ * Formats: PFP · Builder ID · Team · Map pins · filters · finishes · Supabase
+ * Reverse-engineered patterns from hhg-t1, hhg-id-card, frame-in-goa-theta
  */
 
 const CFG = window.HHGOA_CONFIG || {};
@@ -16,47 +17,110 @@ const CLASSES = [
   { id: "harbor-hopper", label: "Harbor Hopper" },
   { id: "night-champion", label: "Night Champion" },
   { id: "comfort-coder", label: "Comfort Coder" },
+  { id: "latency-shaman", label: "Latency Shaman" },
+  { id: "regex-monk", label: "Regex Monk" },
+  { id: "null-whisperer", label: "Null Whisperer" },
+  { id: "edge-case", label: "Edge Case Diplomat" },
+  { id: "async-nav", label: "Async Navigator" },
 ];
 
+/** Photo treatment — from frame-in-goa-theta */
+const FILTERS = {
+  natural: { label: "Natural" },
+  cel: { label: "Cel" },
+  riso: { label: "Riso" },
+};
+
+/** Color finish themes — Goa / Night / Sand */
+const FINISHES = {
+  goa: {
+    bg: "#02140C",
+    ring: ["#FEE101", "#0B6839", "#FF0080", "#FEE101"],
+    badge: "#FEE101",
+    badgeInk: "#02140C",
+    ink: "#FEE101",
+  },
+  night: {
+    bg: "#050510",
+    ring: ["#7DFFC8", "#1a2848", "#FF0080", "#56D8EF"],
+    badge: "#1a2848",
+    badgeInk: "#7DFFC8",
+    ink: "#7DFFC8",
+  },
+  sand: {
+    bg: "#1a1208",
+    ring: ["#F5EDD6", "#C4A800", "#8B5A2B", "#FEE101"],
+    badge: "#F5EDD6",
+    badgeInk: "#1a1208",
+    ink: "#F5EDD6",
+  },
+};
+
+const TEAM = { W: 1200, H: 630 };
+
+/**
+ * Official BuilderPass.png is exactly 1536×1024.
+ * Coordinates measured against the printed yellow ring + field baselines.
+ */
 const PASS = {
   W: 1536,
   H: 1024,
-  photo: { cx: 340, cy: 520, r: 168 },
-  name: { x: 580, y: 360, maxW: 860 },
-  stack: { x: 580, y: 470, maxW: 860 },
-  title: { x: 580, y: 600, maxW: 860 },
-  id: { x: 580, y: 720 },
-  meta: { x: 580, y: 770 },
+  photo: { cx: 345, cy: 588, r: 146 },
+  name: { x: 708, y: 488, maxW: 640 },
+  stack: { x: 708, y: 585, maxW: 640 },
+  title: { x: 708, y: 685, maxW: 640 },
+  id: { x: 708, y: 748 },
+  meta: { x: 708, y: 780 },
 };
+
+/** Portrait Signal Card (creative vertical badge) */
+const SIGNAL = { W: 1080, H: 1512 };
 
 const PFP = { W: 1080, H: 1080, r: 420 };
 
-/** Collectible card themes — Pokémon / signed-foil energy */
+/**
+ * Card themes — HH Goa only (no third-party names)
+ * official = BuilderPass.png · others = creative Signal frames
+ */
 const THEMES = {
-  emerald: {
+  /** New default — Spidey-tracker HUD · landscape Builder ID */
+  relay: {
+    kind: "relay",
+    label: "Relay ID",
+    accent: "#FEE101", accent2: "#FF0080", text: "#FFFFFF", mute: "rgba(255,255,255,.75)",
+    classCol: "#FF0080", foil: ["#fee101", "#56d8ef", "#fee101", "#0b6839"],
+  },
+  official: {
+    kind: "official",
+    label: "Official Pass",
+    accent: "#FEE101", accent2: "#FFF8EB", text: "#FFF8EB", mute: "rgba(255,248,235,.8)",
+    classCol: "#FF0080", foil: ["#fee101", "#ff0080", "#fee101", "#c4a800"],
+  },
+  signal: {
+    kind: "collectible",
+    label: "Signal Card",
     bg0: "#052c17", bg1: "#0b6839", bg2: "#02140c",
-    accent: "#FEE101", accent2: "#7DFFC8", text: "#FFF8EB", mute: "rgba(255,248,235,.72)",
-    classCol: "#E52B50", foil: ["#fff8b0", "#fee101", "#c4a800", "#7dffc8", "#fee101"],
+    accent: "#FEE101", accent2: "#FF0080", text: "#FFFFFF", mute: "rgba(255,255,255,.78)",
+    classCol: "#FF0080",
+    foil: ["#fff8b0", "#fee101", "#ff0080", "#7dffc8", "#fee101", "#c4a800"],
   },
-  sunset: {
-    bg0: "#2a1208", bg1: "#8b3a12", bg2: "#1a0a04",
-    accent: "#FFB84D", accent2: "#FEE101", text: "#FFF5E6", mute: "rgba(255,245,230,.72)",
-    classCol: "#FF6B35", foil: ["#fff0c0", "#ffb84d", "#ff6b35", "#fee101", "#ffb84d"],
-  },
-  ocean: {
+  wave: {
+    kind: "collectible",
     bg0: "#041828", bg1: "#0a4a62", bg2: "#021018",
-    accent: "#56D8EF", accent2: "#7DFFC8", text: "#E8F8FF", mute: "rgba(232,248,255,.72)",
-    classCol: "#FF9C58", foil: ["#b8f0ff", "#56d8ef", "#0b6839", "#7dffc8", "#56d8ef"],
+    accent: "#7DFFC8", accent2: "#FEE101", text: "#E8F8FF", mute: "rgba(232,248,255,.75)",
+    classCol: "#FEE101", foil: ["#b8f0ff", "#7dffc8", "#0b6839", "#fee101", "#7dffc8"],
+  },
+  sand: {
+    kind: "collectible",
+    bg0: "#2a1208", bg1: "#8b3a12", bg2: "#1a0a04",
+    accent: "#FEE101", accent2: "#F5EDD6", text: "#FFF5E6", mute: "rgba(255,245,230,.72)",
+    classCol: "#FF0080", foil: ["#fff0c0", "#fee101", "#c4a800", "#f5edd6", "#fee101"],
   },
   neon: {
-    bg0: "#0a0418", bg1: "#1a0a38", bg2: "#050210",
-    accent: "#FF2D84", accent2: "#7DFFC8", text: "#F5EDFF", mute: "rgba(245,237,255,.72)",
-    classCol: "#FEE101", foil: ["#ff9cdb", "#ff2d84", "#7dffc8", "#c080ff", "#ff2d84"],
-  },
-  holo: {
-    bg0: "#0c1020", bg1: "#1a2848", bg2: "#060810",
-    accent: "#FEE101", accent2: "#56D8EF", text: "#FFFFFF", mute: "rgba(255,255,255,.75)",
-    classCol: "#FF6BCB", foil: ["#ff9cdb", "#56d8ef", "#fee101", "#7dffc8", "#c080ff", "#fee101"],
+    kind: "collectible",
+    bg0: "#120018", bg1: "#2a0840", bg2: "#050210",
+    accent: "#FEE101", accent2: "#FF0080", text: "#FFFFFF", mute: "rgba(255,255,255,.75)",
+    classCol: "#FF0080", foil: ["#ff9cdb", "#ff0080", "#fee101", "#7dffc8", "#ff0080"],
   },
 };
 
@@ -64,7 +128,7 @@ const $ = (id) => document.getElementById(id);
 
 const state = {
   view: "landing",
-  format: "pass", // pass | pfp
+  format: "pass", // pass | pfp | team
   image: null,
   objectUrl: null,
   zoom: 1.15,
@@ -73,13 +137,25 @@ const state = {
   name: "",
   stack: "",
   titleId: CLASSES[(Math.random() * CLASSES.length) | 0].id,
-  theme: "emerald",
+  theme: "official",
+  filter: "natural", // natural | cel | riso
+  finish: "goa", // goa | night | sand
   handle: "",
   city: "",
   idNumber: "",
+  teamSlots: [
+    { name: "", stack: "", image: null, objectUrl: null },
+    { name: "", stack: "", image: null, objectUrl: null },
+    { name: "", stack: "", image: null, objectUrl: null },
+  ],
+  teamCount: 1,
   passTpl: null,
   logoMark: null,
   goaMark: null,
+  sealMark: null,
+  houseMark: null,
+  hackerMan: null,
+  energyBadge: null,
   stickers: {},
   pins: [],
   map: null,
@@ -197,6 +273,9 @@ async function savePin(pin) {
         city: pin.city,
         id_number: pin.idNumber,
         format: pin.format,
+        theme: state.theme || "official",
+        filter: state.filter || "natural",
+        finish: state.finish || "goa",
         lat: pin.lat,
         lng: pin.lng,
         photo_url: pin.photo,
@@ -279,9 +358,14 @@ function show(view) {
   $("studio").hidden = view !== "studio";
   $("mapview").hidden = view !== "map";
   document.body.style.overflow = view === "landing" ? "" : "hidden";
+  document.body.dataset.view = view;
+  document.querySelectorAll(".mdock-btn").forEach((b) => {
+    b.classList.toggle("on", b.dataset.view === view);
+  });
   if (view === "studio") {
     $("id-display").textContent = state.idNumber;
     updatePinHint();
+    refreshPreviewChrome();
     renderCard();
   }
   if (view === "map") {
@@ -294,19 +378,90 @@ function show(view) {
 }
 
 /* ── canvas ── */
+/** Apply Natural / Cel / Riso photo treatment (frame-in-goa-theta style) */
+function filteredPhoto(img) {
+  if (!img || state.filter === "natural") return img;
+  const w = Math.min(img.width, 900);
+  const h = Math.round((img.height / img.width) * w);
+  const off = document.createElement("canvas");
+  off.width = w;
+  off.height = h;
+  const ox = off.getContext("2d");
+  ox.drawImage(img, 0, 0, w, h);
+  const data = ox.getImageData(0, 0, w, h);
+  const d = data.data;
+  if (state.filter === "cel") {
+    for (let i = 0; i < d.length; i += 4) {
+      // posterize into bands
+      d[i] = Math.round(d[i] / 48) * 48;
+      d[i + 1] = Math.round(d[i + 1] / 48) * 48;
+      d[i + 2] = Math.round(d[i + 2] / 48) * 48;
+      // slight contrast boost
+      d[i] = Math.min(255, d[i] * 1.08);
+      d[i + 1] = Math.min(255, d[i + 1] * 1.08);
+      d[i + 2] = Math.min(255, d[i + 2] * 1.05);
+    }
+  } else if (state.filter === "riso") {
+    // dual-ink split: yellow + green brand inks, slight misregister feel
+    for (let i = 0; i < d.length; i += 4) {
+      const g = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      if (g > 140) {
+        d[i] = 254;
+        d[i + 1] = 225;
+        d[i + 2] = 1;
+      } else if (g > 70) {
+        d[i] = 11;
+        d[i + 1] = 104;
+        d[i + 2] = 57;
+      } else {
+        d[i] = 2;
+        d[i + 1] = 20;
+        d[i + 2] = 12;
+      }
+    }
+  }
+  ox.putImageData(data, 0, 0);
+  const out = new Image();
+  out.src = off.toDataURL("image/png");
+  // sync draw path uses canvas as image source via off canvas return
+  off._isCanvas = true;
+  return off;
+}
+
 function drawCoverCircle(c, img, cx, cy, r) {
   if (!img) return;
+  const src = filteredPhoto(img);
+  const iw = src.width || img.width;
+  const ih = src.height || img.height;
   const size = r * 2;
-  const scale = Math.max(size / img.width, size / img.height) * state.zoom;
-  const dw = img.width * scale;
-  const dh = img.height * scale;
+  const scale = Math.max(size / iw, size / ih) * state.zoom;
+  const dw = iw * scale;
+  const dh = ih * scale;
   const dx = cx - dw / 2 + (state.panX / 100) * size;
   const dy = cy - dh / 2 + (state.panY / 100) * size;
   c.save();
   c.beginPath();
   c.arc(cx, cy, r, 0, Math.PI * 2);
   c.clip();
-  c.drawImage(img, dx, dy, dw, dh);
+  c.drawImage(src, dx, dy, dw, dh);
+  c.restore();
+}
+
+function drawCoverRect(c, img, x, y, w, h) {
+  if (!img) return;
+  const src = filteredPhoto(img);
+  const iw = src.width || img.width;
+  const ih = src.height || img.height;
+  const scale = Math.max(w / iw, h / ih) * state.zoom;
+  const dw = iw * scale;
+  const dh = ih * scale;
+  const dx = x + w / 2 - dw / 2 + (state.panX / 100) * w;
+  const dy = y + h / 2 - dh / 2 + (state.panY / 100) * h;
+  c.save();
+  c.beginPath();
+  c.rect(x, y, w, h);
+  c.clip();
+  c.drawImage(src, dx, dy, dw, dh);
   c.restore();
 }
 
@@ -320,26 +475,102 @@ function fit(c, text, maxW, maxSize, min = 16, weight = "800") {
   return s;
 }
 
+function cardSizeLabel() {
+  if (state.format === "pfp") return "1080 × 1080";
+  if (state.format === "team") return `${TEAM.W} × ${TEAM.H}`;
+  if (isCollectibleCard()) return `${SIGNAL.W} × ${SIGNAL.H}`;
+  return "1536 × 1024"; // official + relay landscape
+}
+
 function setFormat(fmt) {
-  state.format = fmt === "pfp" ? "pfp" : "pass";
-  document.querySelectorAll(".seg-btn").forEach((b) => {
-    b.classList.toggle("on", b.dataset.format === state.format);
+  if (fmt === "pfp") state.format = "pfp";
+  else if (fmt === "team") state.format = "team";
+  else state.format = "pass";
+  document.querySelectorAll(".seg-btn, .pill[data-format]").forEach((b) => {
+    const on = b.dataset.format === state.format;
+    b.classList.toggle("on", on);
+    if (b.hasAttribute("aria-pressed")) b.setAttribute("aria-pressed", on ? "true" : "false");
   });
-  $("fields-pass").hidden = state.format === "pfp";
-  $("preview-label").textContent = state.format === "pfp" ? "PFP Frame" : "Builder ID";
-  $("preview-size").textContent = state.format === "pfp" ? "1080 × 1080" : "1536 × 1024";
-  const wrap = $("preview-wrap");
-  wrap.classList.toggle("is-pfp", state.format === "pfp");
-  wrap.classList.toggle("poke-frame", state.format === "pass");
+  if ($("fields-pass")) $("fields-pass").hidden = state.format === "pfp";
+  if ($("fields-team")) $("fields-team").hidden = state.format !== "team";
+  if ($("fields-style")) $("fields-style").hidden = state.format === "team" || state.format === "pfp";
+  syncPreviewLabel();
+  if ($("preview-size")) $("preview-size").textContent = cardSizeLabel();
+  refreshPreviewChrome();
   renderCard();
+}
+
+function syncPreviewLabel() {
+  const el = $("preview-label");
+  if (!el) return;
+  if (state.format === "pfp") el.textContent = "PFP frame";
+  else if (state.format === "team") el.textContent = "Team frame";
+  else if (state.theme === "official") el.textContent = "Builder Pass";
+  else if (state.theme === "signal") el.textContent = "Signal card";
+  else el.textContent = "Builder ID";
+}
+
+function setTheme(theme) {
+  if (!theme) return;
+  state.theme = theme;
+  const sel = $("f-theme");
+  if (sel) sel.value = theme;
+  document.querySelectorAll("#theme-pills .pill, .pill[data-theme]").forEach((b) => {
+    if (!b.dataset.theme) return;
+    const on = b.dataset.theme === theme;
+    b.classList.toggle("on", on);
+    if (b.hasAttribute("aria-pressed")) b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  syncPreviewLabel();
+  refreshPreviewChrome();
+  renderCard();
+}
+
+function setFilter(filter) {
+  if (!filter) return;
+  const sel = $("f-filter");
+  if (sel) sel.value = filter;
+  document.querySelectorAll("#filter-pills .pill").forEach((b) => {
+    const on = b.dataset.filter === filter;
+    b.classList.toggle("on", on);
+    if (b.hasAttribute("aria-pressed")) b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  sync();
+}
+
+function setFinish(finish) {
+  if (!finish) return;
+  const sel = $("f-finish");
+  if (sel) sel.value = finish;
+  document.querySelectorAll("#finish-pills .pill").forEach((b) => {
+    const on = b.dataset.finish === finish;
+    b.classList.toggle("on", on);
+    if (b.hasAttribute("aria-pressed")) b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  sync();
+}
+
+function refreshPreviewChrome() {
+  const wrap = $("preview-wrap");
+  if (!wrap) return;
+  const portrait = state.format === "pass" && isCollectibleCard();
+  const landscapePass = state.format === "pass" && !portrait;
+  wrap.classList.toggle("is-pfp", state.format === "pfp");
+  wrap.classList.toggle("is-team", state.format === "team");
+  wrap.classList.toggle("signal-frame", portrait);
+  wrap.classList.toggle("poke-frame", portrait);
+  wrap.classList.toggle("official-frame", landscapePass || state.format === "team");
+  wrap.classList.toggle("is-portrait", portrait);
+  if ($("preview-size")) $("preview-size").textContent = cardSizeLabel();
 }
 
 /** Small octagon badge icon (HH form-field style) */
 function drawOctIcon(c, x, y, s, kind) {
   const r = s / 2;
+  const col = theme().accent || "#FEE101";
   c.save();
   c.translate(x + r, y + r);
-  c.strokeStyle = "#FEE101";
+  c.strokeStyle = col;
   c.lineWidth = 2.5;
   c.beginPath();
   for (let i = 0; i < 8; i++) {
@@ -351,8 +582,8 @@ function drawOctIcon(c, x, y, s, kind) {
   }
   c.closePath();
   c.stroke();
-  c.fillStyle = "#FEE101";
-  c.strokeStyle = "#FEE101";
+  c.fillStyle = col;
+  c.strokeStyle = col;
   c.lineWidth = 2;
   if (kind === "user") {
     c.beginPath();
@@ -387,10 +618,10 @@ function drawOctIcon(c, x, y, s, kind) {
   c.textBaseline = "alphabetic";
 }
 
-function drawBarcode(c, x, y, w, h, seed) {
+function drawBarcode(c, x, y, w, h, seed, color) {
   let n = 0;
   for (let i = 0; i < seed.length; i++) n = (n * 31 + seed.charCodeAt(i)) >>> 0;
-  c.fillStyle = theme().accent;
+  c.fillStyle = color || theme().accent;
   let px = x;
   while (px < x + w - 2) {
     n = (n * 1103515245 + 12345) >>> 0;
@@ -402,22 +633,40 @@ function drawBarcode(c, x, y, w, h, seed) {
 }
 
 function theme() {
-  return THEMES[state.theme] || THEMES.emerald;
+  return THEMES[state.theme] || THEMES.relay;
+}
+
+function isOfficialCard() {
+  return (theme().kind || "") === "official";
+}
+
+function isRelayCard() {
+  return (theme().kind || "") === "relay";
+}
+
+function isCollectibleCard() {
+  return (theme().kind || "") === "collectible";
+}
+
+function cardMetaLine() {
+  const handle = state.handle
+    ? state.handle.startsWith("@")
+      ? state.handle
+      : `@${state.handle}`
+    : "";
+  return [handle, state.city].filter(Boolean).join("  ·  ").toUpperCase();
 }
 
 function drawFoilBorder(c, x, y, w, h, t, r = 28) {
   const pad = 10;
-  // outer black
   c.fillStyle = "#0a0a0a";
   roundRect(c, x, y, w, h, r);
   c.fill();
-  // foil ring
   const g = c.createLinearGradient(x, y, x + w, y + h);
-  t.foil.forEach((col, i) => g.addColorStop(i / (t.foil.length - 1), col));
+  t.foil.forEach((col, i) => g.addColorStop(i / Math.max(1, t.foil.length - 1), col));
   c.fillStyle = g;
   roundRect(c, x + 4, y + 4, w - 8, h - 8, r - 2);
   c.fill();
-  // inner panel
   const ig = c.createLinearGradient(x, y, x + w * 0.3, y + h);
   ig.addColorStop(0, t.bg1);
   ig.addColorStop(0.45, t.bg0);
@@ -452,217 +701,498 @@ function drawCornerOrnament(c, x, y, flipX, flipY, col) {
   c.restore();
 }
 
-function drawPass(c) {
+/** Soft text with depth — stays readable on dark green fields */
+function drawFieldValue(c, text, x, y, maxW, maxSize, color, weight = "800") {
+  const s = fit(c, text, maxW, maxSize, 18, weight);
+  c.font = `${weight} ${s}px Space Grotesk, sans-serif`;
+  c.textAlign = "left";
+  c.textBaseline = "alphabetic";
+  // subtle shadow for print polish
+  c.fillStyle = "rgba(0,0,0,.45)";
+  c.fillText(text, x + 1.5, y + 1.5);
+  c.fillStyle = color;
+  c.fillText(text, x, y);
+  return s;
+}
+
+/**
+ * NEW Builder ID · Relay — Spidey-tracker HUD style, HH Goa palette
+ * Landscape 1536×1024 creative frame (not the official template)
+ */
+function drawPassRelay(c) {
+  const W = PASS.W;
+  const H = PASS.H;
+  const t = theme();
+  const id = state.idNumber || "HHG-2026-····";
+  const name = (state.name || "YOUR NAME").toUpperCase();
+  const stack = (state.stack || "YOUR STACK").toUpperCase();
+  const title = classLabel().toUpperCase();
+  const meta = cardMetaLine();
+  const f = finish();
+
+  // Deep console stage
+  c.fillStyle = f.bg || "#02140c";
+  c.fillRect(0, 0, W, H);
+
+  // Outer bezel (tracker device)
+  const bezel = c.createLinearGradient(0, 0, W, H);
+  bezel.addColorStop(0, "#129a52");
+  bezel.addColorStop(0.4, "#0b6839");
+  bezel.addColorStop(1, "#052c17");
+  c.fillStyle = bezel;
+  roundRect(c, 24, 24, W - 48, H - 48, 28);
+  c.fill();
+  c.strokeStyle = "#FEE101";
+  c.lineWidth = 4;
+  roundRect(c, 24, 24, W - 48, H - 48, 28);
+  c.stroke();
+
+  // Inner screen
+  c.fillStyle = "#061820";
+  roundRect(c, 48, 48, W - 96, H - 96, 18);
+  c.fill();
+
+  // Scan grid
+  c.save();
+  c.globalAlpha = 0.12;
+  c.strokeStyle = "#7DFFC8";
+  c.lineWidth = 1;
+  for (let x = 64; x < W - 64; x += 36) {
+    c.beginPath();
+    c.moveTo(x, 64);
+    c.lineTo(x, H - 64);
+    c.stroke();
+  }
+  for (let y = 64; y < H - 64; y += 36) {
+    c.beginPath();
+    c.moveTo(64, y);
+    c.lineTo(W - 64, y);
+    c.stroke();
+  }
+  c.restore();
+
+  // Top HUD bar
+  c.fillStyle = "rgba(0,0,0,.55)";
+  roundRect(c, 64, 64, W - 128, 56, 10);
+  c.fill();
+  c.fillStyle = "#7DFFC8";
+  c.beginPath();
+  c.arc(88, 92, 7, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = "#FEE101";
+  c.font = "800 16px JetBrains Mono, monospace";
+  c.textAlign = "left";
+  c.fillText("HACKER TRACKER  ·  BUILDER ID  ·  LIVE", 108, 98);
+  c.textAlign = "right";
+  c.fillStyle = "rgba(254,225,1,.85)";
+  c.font = "700 14px JetBrains Mono, monospace";
+  c.fillText("28–31 OCT 2026  ·  GOA", W - 80, 98);
+  c.textAlign = "left";
+
+  // Photo circle + radar rings
+  const pcx = 320;
+  const pcy = 520;
+  const pr = 168;
+  c.strokeStyle = "rgba(125,255,200,.35)";
+  c.lineWidth = 2;
+  for (let i = 1; i <= 3; i++) {
+    c.beginPath();
+    c.arc(pcx, pcy, pr + i * 28, 0, Math.PI * 2);
+    c.stroke();
+  }
+  // foil ring
+  const rg = c.createLinearGradient(pcx - pr, pcy - pr, pcx + pr, pcy + pr);
+  t.foil.forEach((col, i) => rg.addColorStop(i / Math.max(1, t.foil.length - 1), col));
+  c.fillStyle = rg;
+  c.beginPath();
+  c.arc(pcx, pcy, pr + 14, 0, Math.PI * 2);
+  c.fill();
+  c.fillStyle = "#02140c";
+  c.beginPath();
+  c.arc(pcx, pcy, pr + 4, 0, Math.PI * 2);
+  c.fill();
+  if (state.image) drawCoverCircle(c, state.image, pcx, pcy, pr);
+  else {
+    c.fillStyle = "#0b6839";
+    c.beginPath();
+    c.arc(pcx, pcy, pr, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#FEE101";
+    c.font = "700 18px JetBrains Mono, monospace";
+    c.textAlign = "center";
+    c.fillText("PHOTO", pcx, pcy + 6);
+    c.textAlign = "left";
+  }
+  c.strokeStyle = "#FEE101";
+  c.lineWidth = 5;
+  c.beginPath();
+  c.arc(pcx, pcy, pr + 2, 0, Math.PI * 2);
+  c.stroke();
+
+  // Class sticker
+  const sticker = state.stickers[state.titleId];
+  if (sticker) c.drawImage(sticker, pcx + pr - 40, pcy + pr - 50, 100, 100);
+
+  // Right identity panel
+  const px = 560;
+  let py = 160;
+  c.fillStyle = "rgba(0,0,0,.45)";
+  roundRect(c, px, py, 900, 620, 16);
+  c.fill();
+  c.strokeStyle = "rgba(254,225,1,.4)";
+  c.lineWidth = 2;
+  roundRect(c, px, py, 900, 620, 16);
+  c.stroke();
+
+  // Corner ticks (HUD)
+  const tick = (x, y, fx, fy) => {
+    c.strokeStyle = "#FEE101";
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(x, y + fy * 22);
+    c.lineTo(x, y);
+    c.lineTo(x + fx * 22, y);
+    c.stroke();
+  };
+  tick(px + 12, py + 12, 1, 1);
+  tick(px + 888, py + 12, -1, 1);
+  tick(px + 12, py + 608, 1, -1);
+  tick(px + 888, py + 608, -1, -1);
+
+  c.fillStyle = "#7DFFC8";
+  c.font = "700 12px JetBrains Mono, monospace";
+  c.fillText("IDENTITY MODULE", px + 36, py + 40);
+
+  const row = (label, value, y, col, maxS = 36) => {
+    c.fillStyle = "rgba(254,225,1,.12)";
+    roundRect(c, px + 28, y, 844, 88, 12);
+    c.fill();
+    c.fillStyle = "#FEE101";
+    c.font = "700 11px JetBrains Mono, monospace";
+    c.fillText(label, px + 48, y + 28);
+    c.fillStyle = col;
+    const sz = fit(c, value, 780, maxS, 18, "800");
+    c.font = `800 ${sz}px Space Grotesk, sans-serif`;
+    c.fillText(value, px + 48, y + 64);
+  };
+  row("NAME", name, py + 60, "#fff", 38);
+  row("STACK / ROLE", stack, py + 168, "#FEE101", 30);
+  row("BUILDER CLASS", title, py + 276, "#FF0080", 30);
+  row("ID", id, py + 384, "#7DFFC8", 28);
+
+  if (meta) {
+    c.fillStyle = "rgba(255,255,255,.7)";
+    c.font = "600 16px Space Grotesk, sans-serif";
+    c.fillText(meta.slice(0, 48), px + 48, py + 520);
+  }
+
+  c.fillStyle = "rgba(255,255,255,.45)";
+  c.font = "600 13px JetBrains Mono, monospace";
+  c.fillText(HASHTAG + "  ·  LESS NOISE. MORE SIGNAL.", px + 48, py + 570);
+
+  if (state.logoMark) c.drawImage(state.logoMark, px + 820, py + 520, 48, 48);
+  if (state.sealMark) c.drawImage(state.sealMark, 80, H - 200, 80, 80);
+
+  // Bottom signed bar
+  drawSignatureStrip(c, 64, H - 100, W - 128, 36, id, t);
+}
+
+/**
+ * Official Builder Pass — clean full-bleed template.
+ */
+function drawPassOfficial(c) {
   const { W, H, photo, name: nb, stack: sb, title: tb } = PASS;
+  const id = state.idNumber || "HHG-2026-····";
+  const name = (state.name || "YOUR NAME").toUpperCase();
+  const stack = (state.stack || "YOUR STACK").toUpperCase();
+  const title = classLabel().toUpperCase();
+  const meta = cardMetaLine();
+
+  c.fillStyle = "#000";
+  c.fillRect(0, 0, W, H);
+
+  if (state.passTpl) {
+    c.drawImage(state.passTpl, 0, 0, W, H);
+  } else {
+    c.fillStyle = "#0B6839";
+    roundRect(c, 128, 136, 1276, 740, 48);
+    c.fill();
+  }
+
+  // Photo in the printed yellow ring
+  const rPhoto = photo.r - 6;
+  if (state.image) {
+    drawCoverCircle(c, state.image, photo.cx, photo.cy, rPhoto);
+  } else {
+    c.fillStyle = "rgba(5,44,23,.45)";
+    c.beginPath();
+    c.arc(photo.cx, photo.cy, rPhoto, 0, Math.PI * 2);
+    c.fill();
+    c.fillStyle = "#FEE101";
+    c.font = "700 15px JetBrains Mono, monospace";
+    c.textAlign = "center";
+    c.fillText("ADD PHOTO", photo.cx, photo.cy + 5);
+    c.textAlign = "left";
+  }
+
+  // Soft inner highlight under ring
+  c.beginPath();
+  c.arc(photo.cx, photo.cy, rPhoto - 1, 0, Math.PI * 2);
+  c.strokeStyle = "rgba(254,225,1,.35)";
+  c.lineWidth = 3;
+  c.stroke();
+
+  // Values on the three form lines
+  drawFieldValue(c, name, nb.x, nb.y, nb.maxW, 38, "#FFF8EB", "800");
+  drawFieldValue(c, stack, sb.x, sb.y, sb.maxW, 30, "#FEE101", "700");
+  drawFieldValue(c, title, tb.x, tb.y, tb.maxW, 30, "#FEE101", "800");
+
+  // Compact ID under fields (doesn't cover bottom tagline)
+  c.fillStyle = "rgba(2,20,12,.55)";
+  roundRect(c, PASS.id.x - 8, PASS.id.y - 20, 340, 30, 6);
+  c.fill();
+  c.fillStyle = "#FEE101";
+  c.font = "700 14px JetBrains Mono, monospace";
+  c.textAlign = "left";
+  c.fillText(id, PASS.id.x, PASS.id.y);
+
+  if (meta) {
+    c.fillStyle = "rgba(255,248,235,.8)";
+    c.font = "600 13px Space Grotesk, sans-serif";
+    c.fillText(meta.slice(0, 40), PASS.meta.x, PASS.meta.y);
+  }
+
+  // Class sticker tucked by photo
+  const sticker = state.stickers[state.titleId];
+  if (sticker) {
+    c.drawImage(sticker, photo.cx + photo.r - 22, photo.cy + photo.r - 48, 88, 88);
+  }
+}
+
+function drawSignatureStrip(c, x, y, w, h, id, t) {
+  const g = c.createLinearGradient(x, y, x + w, y);
+  t.foil.forEach((col, i) => g.addColorStop(i / Math.max(1, t.foil.length - 1), col));
+  c.fillStyle = g;
+  roundRect(c, x, y, w, h, 8);
+  c.fill();
+  c.fillStyle = "rgba(10,10,10,.9)";
+  roundRect(c, x + 3, y + 3, w - 6, h - 6, 6);
+  c.fill();
+  c.fillStyle = "#FEE101";
+  c.font = "700 12px JetBrains Mono, monospace";
+  c.textAlign = "left";
+  c.fillText("SIGNED · HH GOA RELAY · " + id, x + 14, y + h / 2 + 4);
+  c.textAlign = "right";
+  c.fillStyle = "#FF0080";
+  c.fillText("★ AUTHENTIC", x + w - 14, y + h / 2 + 4);
+  c.textAlign = "left";
+}
+
+/**
+ * Signal Card — creative vertical HH Goa badge (no third-party theme names)
+ * Clean layout: photo · identity · signed strip
+ */
+function drawPassCollectible(c) {
+  const W = SIGNAL.W;
+  const H = SIGNAL.H;
   const t = theme();
   const id = state.idNumber || "HHG-2026-····";
   const name = (state.name || "BUILDER NAME").toUpperCase();
   const stack = (state.stack || "STACK & ROLE").toUpperCase();
   const title = classLabel().toUpperCase();
+  const meta = cardMetaLine();
 
-  // Canvas base
-  c.fillStyle = "#050505";
+  c.fillStyle = "#0a0a0a";
   c.fillRect(0, 0, W, H);
+  drawFoilBorder(c, 14, 14, W - 28, H - 28, t, 20);
 
-  // Pokémon / signed foil card body
-  drawFoilBorder(c, 28, 28, W - 56, H - 56, t, 32);
+  // Face
+  const face = c.createLinearGradient(40, 40, W - 40, H - 40);
+  face.addColorStop(0, t.bg1 || "#0b6839");
+  face.addColorStop(0.55, t.bg0 || "#052c17");
+  face.addColorStop(1, t.bg2 || "#02140c");
+  c.fillStyle = face;
+  roundRect(c, 32, 32, W - 64, H - 64, 14);
+  c.fill();
 
-  // Circuit / noise texture
+  // Soft sheen
   c.save();
-  c.globalAlpha = 0.07;
-  c.strokeStyle = t.accent;
-  c.lineWidth = 1;
-  for (let i = 0; i < 18; i++) {
-    const y = 80 + i * 48;
-    c.beginPath();
-    c.moveTo(80, y);
-    c.lineTo(W - 80, y + ((i % 2) * 12 - 6));
-    c.stroke();
-  }
+  c.globalAlpha = 0.1;
+  const sheen = c.createLinearGradient(0, 0, W, H);
+  sheen.addColorStop(0, "transparent");
+  sheen.addColorStop(0.45, t.accent);
+  sheen.addColorStop(0.55, t.accent2 || "#FF0080");
+  sheen.addColorStop(1, "transparent");
+  c.fillStyle = sheen;
+  c.fillRect(32, 32, W - 64, H - 64);
   c.restore();
 
   // Header bar
-  const hg = c.createLinearGradient(60, 50, W - 60, 120);
-  hg.addColorStop(0, "rgba(0,0,0,.45)");
-  hg.addColorStop(1, "rgba(0,0,0,.15)");
-  c.fillStyle = hg;
-  roundRect(c, 56, 52, W - 112, 78, 14);
+  c.fillStyle = "rgba(0,0,0,.4)";
+  roundRect(c, 48, 48, W - 96, 100, 12);
   c.fill();
-
   c.fillStyle = t.accent;
-  c.font = "800 28px Space Grotesk, sans-serif";
+  c.font = "700 12px JetBrains Mono, monospace";
   c.textAlign = "left";
-  c.fillText("HACKER HOUSE GOA", 80, 90);
-  c.fillStyle = t.mute;
-  c.font = "600 16px JetBrains Mono, monospace";
-  c.fillText("BUILDER ID  ·  COLLECTIBLE PASS  ·  2026", 80, 114);
+  c.fillText("HH GOA 2026  ·  BUILDER SIGNAL", 64, 76);
+  const ns = fit(c, name, 900, 36, 18, "800");
+  c.font = `800 ${ns}px Space Grotesk, sans-serif`;
+  c.fillStyle = "#fff";
+  c.fillText(name, 64, 120);
 
-  // HP-style class chip
-  c.fillStyle = t.accent;
-  roundRect(c, W - 280, 64, 200, 48, 10);
+  // Class chip
+  c.fillStyle = t.accent2 || "#FF0080";
+  roundRect(c, W - 280, 60, 200, 40, 10);
   c.fill();
-  c.fillStyle = "#02140c";
-  c.font = "800 18px Space Grotesk, sans-serif";
+  c.fillStyle = "#fff";
+  c.font = "800 13px Space Grotesk, sans-serif";
   c.textAlign = "center";
-  c.fillText("★ BUILDER", W - 180, 95);
+  c.fillText(title.slice(0, 16), W - 180, 86);
   c.textAlign = "left";
 
-  if (state.logoMark) {
-    c.drawImage(state.logoMark, W - 100, 58, 52, 52);
-  }
+  // Photo window
+  const ax = 52;
+  const ay = 168;
+  const aw = W - 104;
+  const ah = 680;
+  const foilG = c.createLinearGradient(ax, ay, ax + aw, ay + ah);
+  t.foil.forEach((col, i) => foilG.addColorStop(i / Math.max(1, t.foil.length - 1), col));
+  c.fillStyle = foilG;
+  roundRect(c, ax, ay, aw, ah, 16);
+  c.fill();
+  c.fillStyle = "#0a0a0a";
+  roundRect(c, ax + 8, ay + 8, aw - 16, ah - 16, 12);
+  c.fill();
 
-  // Photo plate (signed border)
-  const pr = photo.r + 18;
   c.save();
-  const pg = c.createLinearGradient(photo.cx - pr, photo.cy - pr, photo.cx + pr, photo.cy + pr);
-  t.foil.forEach((col, i) => pg.addColorStop(i / (t.foil.length - 1), col));
-  c.fillStyle = pg;
-  c.beginPath();
-  c.arc(photo.cx, photo.cy, pr, 0, Math.PI * 2);
-  c.fill();
-  c.fillStyle = t.bg2;
-  c.beginPath();
-  c.arc(photo.cx, photo.cy, photo.r + 6, 0, Math.PI * 2);
-  c.fill();
-  c.restore();
-
-  if (state.image) drawCoverCircle(c, state.image, photo.cx, photo.cy, photo.r);
-  else {
-    c.fillStyle = "rgba(254,225,1,.08)";
-    c.beginPath();
-    c.arc(photo.cx, photo.cy, photo.r, 0, Math.PI * 2);
-    c.fill();
+  roundRect(c, ax + 14, ay + 14, aw - 28, ah - 28, 10);
+  c.clip();
+  if (state.image) {
+    const img = filteredPhoto(state.image);
+    const iw = aw - 28;
+    const ih = ah - 28;
+    const sw = img.width || state.image.width;
+    const sh = img.height || state.image.height;
+    const scale = Math.max(iw / sw, ih / sh) * state.zoom;
+    const dw = sw * scale;
+    const dh = sh * scale;
+    const dx = ax + 14 + iw / 2 - dw / 2 + (state.panX / 100) * iw;
+    const dy = ay + 14 + ih / 2 - dh / 2 + (state.panY / 100) * ih;
+    c.drawImage(img, dx, dy, dw, dh);
+  } else if (state.hackerMan) {
+    c.fillStyle = "#111";
+    c.fillRect(ax + 14, ay + 14, aw - 28, ah - 28);
+    // 2D character · portrait aspect (240×320)
+    const ch = Math.min(ah * 0.88, aw * 1.05);
+    const cw = ch * (240 / 320);
+    c.drawImage(state.hackerMan, ax + (aw - cw) / 2, ay + (ah - ch) / 2 + 6, cw, ch);
+  } else {
+    c.fillStyle = "#111";
+    c.fillRect(ax + 14, ay + 14, aw - 28, ah - 28);
     c.fillStyle = t.accent;
-    c.font = "700 18px JetBrains Mono, monospace";
+    c.font = "700 22px JetBrains Mono, monospace";
     c.textAlign = "center";
-    c.fillText("PHOTO", photo.cx, photo.cy + 6);
+    c.fillText("Drop a photo", ax + aw / 2, ay + ah / 2);
     c.textAlign = "left";
   }
+  c.restore();
 
-  // Outer photo ring
-  c.strokeStyle = t.accent;
-  c.lineWidth = 5;
-  c.beginPath();
-  c.arc(photo.cx, photo.cy, photo.r + 2, 0, Math.PI * 2);
-  c.stroke();
-
-  // Field labels + values
-  const drawField = (label, value, x, y, maxW, maxSize, col, weight = "800") => {
-    c.fillStyle = t.accent;
-    c.font = "700 13px JetBrains Mono, monospace";
-    c.fillText(label, x, y - 22);
-    c.fillStyle = col;
-    const s = fit(c, value, maxW, maxSize, 18, weight);
-    c.font = `${weight} ${s}px Space Grotesk, sans-serif`;
-    c.fillText(value, x, y);
-  };
-
-  drawField("NAME", name, nb.x, nb.y, nb.maxW, 48, t.text);
-  drawField("STACK / ROLE", stack, sb.x, sb.y, sb.maxW, 32, t.accent, "700");
-  drawField("CLASS", title, tb.x, tb.y, tb.maxW, 34, t.classCol);
-
-  // ID chip
-  c.fillStyle = "rgba(0,0,0,.35)";
-  roundRect(c, PASS.id.x - 8, PASS.id.y - 28, 420, 44, 10);
-  c.fill();
-  c.strokeStyle = t.accent;
-  c.lineWidth = 2;
-  roundRect(c, PASS.id.x - 8, PASS.id.y - 28, 420, 44, 10);
-  c.stroke();
-  c.fillStyle = t.accent;
-  c.font = "700 18px JetBrains Mono, monospace";
-  c.fillText(id, PASS.id.x + 8, PASS.id.y);
-
-  const handle = state.handle
-    ? state.handle.startsWith("@")
-      ? state.handle
-      : `@${state.handle}`
-    : "";
-  const meta = [handle, state.city].filter(Boolean).join("  ·  ").toUpperCase();
-  if (meta) {
-    c.fillStyle = t.mute;
-    c.font = "600 16px Space Grotesk, sans-serif";
-    c.fillText(meta.slice(0, 48), PASS.meta.x, PASS.meta.y);
-  }
-
-  // Class sticker
   const sticker = state.stickers[state.titleId];
-  if (sticker) {
-    c.drawImage(sticker, photo.cx - photo.r - 16, photo.cy + photo.r - 36, 130, 130);
-  }
+  if (sticker) c.drawImage(sticker, ax + aw - 118, ay + ah - 118, 96, 96);
 
-  // Signed strip
-  const stripY = H - 150;
-  const sg = c.createLinearGradient(60, stripY, W - 60, stripY + 60);
-  t.foil.forEach((col, i) => sg.addColorStop(i / (t.foil.length - 1), col));
-  c.fillStyle = sg;
-  roundRect(c, 60, stripY, W - 120, 70, 12);
+  // Identity rows
+  let sy = ay + ah + 28;
+  const row = (label, value, col) => {
+    c.fillStyle = "rgba(0,0,0,.4)";
+    roundRect(c, 52, sy, W - 104, 72, 12);
+    c.fill();
+    c.strokeStyle = "rgba(254,225,1,.3)";
+    c.lineWidth = 1.5;
+    roundRect(c, 52, sy, W - 104, 72, 12);
+    c.stroke();
+    c.fillStyle = t.accent;
+    c.font = "700 11px JetBrains Mono, monospace";
+    c.fillText(label, 72, sy + 26);
+    c.fillStyle = col;
+    const sz = fit(c, value, W - 160, 26, 16, "800");
+    c.font = `800 ${sz}px Space Grotesk, sans-serif`;
+    c.fillText(value, 72, sy + 54);
+    sy += 84;
+  };
+  row("STACK / ROLE", stack, t.accent);
+  row("BUILDER ID", id, "#fff");
+  if (meta) row("HANDLE · CITY", meta, "rgba(255,255,255,.85)");
+
+  // Tagline box
+  c.fillStyle = "rgba(0,0,0,.45)";
+  roundRect(c, 52, sy, W - 104, 88, 12);
   c.fill();
-  c.fillStyle = "rgba(2,20,12,.88)";
-  roundRect(c, 66, stripY + 6, W - 132, 58, 10);
-  c.fill();
-  c.fillStyle = t.accent;
-  c.font = "700 14px JetBrains Mono, monospace";
-  c.fillText("SIGNED  ·  HH GOA RELAY  ·  AUTHENTIC BUILDER", 90, stripY + 30);
-  c.fillStyle = t.mute;
-  c.font = "600 13px Space Grotesk, sans-serif";
-  c.fillText("Verified collectible · Not transferable · #FrameInGoa", 90, stripY + 52);
+  c.fillStyle = t.accent2 || "#FF0080";
+  c.font = "800 12px JetBrains Mono, monospace";
+  c.fillText("FRAME IN GOA", 72, sy + 28);
+  c.fillStyle = "#fff";
+  c.font = "600 18px Space Grotesk, sans-serif";
+  c.fillText("Less noise. More signal.", 72, sy + 56);
+  c.fillStyle = "rgba(255,255,255,.5)";
+  c.font = "600 12px JetBrains Mono, monospace";
+  c.fillText(HASHTAG + "  ·  28–31 OCT 2026  ·  247 BUILDERS", 72, sy + 78);
 
-  // Barcode
-  drawBarcode(c, W - 420, stripY + 16, 280, 40, id + name);
+  drawSignatureStrip(c, 52, H - 92, W - 190, 38, id, t);
+  drawBarcode(c, W - 120, H - 88, 60, 30, id + name, t.accent);
 
-  // Corner ornaments
-  const o = t.accent;
-  drawCornerOrnament(c, 52, 52, false, false, o);
-  drawCornerOrnament(c, W - 52, 52, true, false, o);
-  drawCornerOrnament(c, 52, H - 52, false, true, o);
-  drawCornerOrnament(c, W - 52, H - 52, true, true, o);
-
-  // Footer
-  c.fillStyle = t.accent;
-  c.font = "700 14px JetBrains Mono, monospace";
+  c.fillStyle = "rgba(255,255,255,.4)";
+  c.font = "600 12px JetBrains Mono, monospace";
+  c.textAlign = "center";
+  c.fillText("HHG · 2026  ·  GOA RELAY", W / 2, H - 36);
   c.textAlign = "left";
-  c.fillText("28–31 OCT 2026 · GOA · INDIA", 70, H - 48);
-  c.textAlign = "right";
-  c.fillText(HASHTAG + "  ·  LESS NOISE. MORE SIGNAL.", W - 70, H - 48);
-  c.textAlign = "left";
+
+  drawCornerOrnament(c, 28, 28, false, false, t.accent);
+  drawCornerOrnament(c, W - 28, 28, true, false, t.accent);
+  drawCornerOrnament(c, 28, H - 28, false, true, t.accent2 || "#FF0080");
+  drawCornerOrnament(c, W - 28, H - 28, true, true, t.accent2 || "#FF0080");
+}
+
+function drawPass(c) {
+  if (isRelayCard()) drawPassRelay(c);
+  else if (isOfficialCard()) drawPassOfficial(c);
+  else drawPassCollectible(c);
+}
+
+function finish() {
+  return FINISHES[state.finish] || FINISHES.goa;
 }
 
 function drawPfp(c) {
   const { W, H, r } = PFP;
   const cx = W / 2;
   const cy = H / 2 - 20;
+  const f = finish();
 
-  c.fillStyle = "#02140C";
+  c.fillStyle = f.bg;
   c.fillRect(0, 0, W, H);
 
-  // yellow paint splash vibe
-  c.fillStyle = "rgba(254,225,1,.12)";
+  c.fillStyle = "rgba(254,225,1,.1)";
   c.beginPath();
   c.ellipse(cx - 80, cy + 40, 520, 480, -0.3, 0, Math.PI * 2);
   c.fill();
 
   if (typeof c.createConicGradient === "function") {
     const ring = c.createConicGradient(0, cx, cy);
-    ring.addColorStop(0, "#FEE101");
-    ring.addColorStop(0.2, "#0B6839");
-    ring.addColorStop(0.45, "#7DFFC8");
-    ring.addColorStop(0.7, "#0B6839");
-    ring.addColorStop(1, "#FEE101");
+    f.ring.forEach((col, i) => ring.addColorStop(i / Math.max(1, f.ring.length - 1), col));
     c.fillStyle = ring;
   } else {
-    c.fillStyle = "#FEE101";
+    c.fillStyle = f.ink;
   }
   c.beginPath();
   c.arc(cx, cy, r + 88, 0, Math.PI * 2);
   c.fill();
 
-  c.fillStyle = "#02140C";
+  c.fillStyle = f.bg;
   c.beginPath();
   c.arc(cx, cy, r + 50, 0, Math.PI * 2);
   c.fill();
 
-  c.strokeStyle = "#FEE101";
+  c.strokeStyle = f.ink;
   c.lineWidth = 16;
   c.beginPath();
   c.arc(cx, cy, r + 26, 0, Math.PI * 2);
@@ -680,17 +1210,17 @@ function drawPfp(c) {
     c.beginPath();
     c.arc(cx, cy, r, 0, Math.PI * 2);
     c.fill();
-    c.fillStyle = "#FEE101";
+    c.fillStyle = f.ink;
     c.font = "700 36px Space Grotesk, sans-serif";
     c.textAlign = "center";
     c.fillText("UPLOAD", cx, cy + 12);
   }
 
   // top badge
-  c.fillStyle = "#FEE101";
+  c.fillStyle = f.badge;
   roundRect(c, cx - 160, 48, 320, 52, 12);
   c.fill();
-  c.fillStyle = "#02140C";
+  c.fillStyle = f.badgeInk;
   c.font = "800 22px Space Grotesk, sans-serif";
   c.textAlign = "center";
   c.fillText("HACKER HOUSE GOA", cx, 82);
@@ -703,12 +1233,12 @@ function drawPfp(c) {
   c.fillStyle = "rgba(2,20,12,.92)";
   roundRect(c, 140, H - 170, W - 280, 90, 16);
   c.fill();
-  c.strokeStyle = "#FEE101";
+  c.strokeStyle = f.ink;
   c.lineWidth = 3;
   roundRect(c, 140, H - 170, W - 280, 90, 16);
   c.stroke();
 
-  c.fillStyle = "#FEE101";
+  c.fillStyle = f.ink;
   c.font = "800 26px Space Grotesk, sans-serif";
   c.fillText("28–31 OCT 2026", cx, H - 125);
   c.fillStyle = "#F5EDD6";
@@ -728,6 +1258,95 @@ function roundRect(c, x, y, w, h, r) {
   c.closePath();
 }
 
+/** Team frame 1200×630 — 1–3 builders (frame-in-goa-theta) */
+function drawTeam(c) {
+  const { W, H } = TEAM;
+  const f = finish();
+  const n = Math.min(3, Math.max(1, state.teamCount | 0));
+
+  c.fillStyle = f.bg;
+  c.fillRect(0, 0, W, H);
+
+  // brand header bar
+  c.fillStyle = "#0B6839";
+  c.fillRect(0, 0, W, 72);
+  c.fillStyle = "#FEE101";
+  c.font = "800 28px Space Grotesk, sans-serif";
+  c.textAlign = "left";
+  c.fillText("HACKER HOUSE GOA · TEAM", 28, 46);
+  c.font = "700 14px JetBrains Mono, monospace";
+  c.fillStyle = "rgba(254,225,1,.8)";
+  c.textAlign = "right";
+  c.fillText("28–31 OCT 2026  ·  " + HASHTAG, W - 28, 46);
+  c.textAlign = "left";
+
+  const pad = 28;
+  const top = 96;
+  const bottom = 56;
+  const gap = 16;
+  const cellW = (W - pad * 2 - gap * (n - 1)) / n;
+  const cellH = H - top - bottom;
+
+  for (let i = 0; i < n; i++) {
+    const slot = state.teamSlots[i] || {};
+    const img = slot.image || (i === 0 ? state.image : null);
+    const x = pad + i * (cellW + gap);
+    const y = top;
+
+    // foil cell border
+    c.fillStyle = "#FEE101";
+    roundRect(c, x, y, cellW, cellH, 14);
+    c.fill();
+    c.fillStyle = "#0a0a0a";
+    roundRect(c, x + 4, y + 4, cellW - 8, cellH - 8, 12);
+    c.fill();
+
+    const photoH = cellH - 100;
+    c.save();
+    roundRect(c, x + 12, y + 12, cellW - 24, photoH, 10);
+    c.clip();
+    if (img) {
+      // use slot image without pan for secondary members
+      const prevZ = state.zoom;
+      const prevX = state.panX;
+      const prevY = state.panY;
+      if (i > 0) {
+        state.zoom = 1.1;
+        state.panX = 0;
+        state.panY = 0;
+      }
+      drawCoverRect(c, img, x + 12, y + 12, cellW - 24, photoH);
+      state.zoom = prevZ;
+      state.panX = prevX;
+      state.panY = prevY;
+    } else {
+      c.fillStyle = "#0B6839";
+      c.fillRect(x + 12, y + 12, cellW - 24, photoH);
+      c.fillStyle = "#FEE101";
+      c.font = "700 16px JetBrains Mono, monospace";
+      c.textAlign = "center";
+      c.fillText("PHOTO " + (i + 1), x + cellW / 2, y + 12 + photoH / 2);
+      c.textAlign = "left";
+    }
+    c.restore();
+
+    const nm = (slot.name || (i === 0 ? state.name : "") || "BUILDER " + (i + 1)).toUpperCase();
+    const st = (slot.stack || (i === 0 ? state.stack : "") || "STACK").toUpperCase();
+    c.fillStyle = "#fff";
+    c.font = "800 18px Space Grotesk, sans-serif";
+    c.fillText(nm.slice(0, 18), x + 16, y + photoH + 40);
+    c.fillStyle = "#FEE101";
+    c.font = "700 13px JetBrains Mono, monospace";
+    c.fillText(st.slice(0, 22), x + 16, y + photoH + 64);
+  }
+
+  c.fillStyle = "rgba(254,225,1,.7)";
+  c.font = "700 12px JetBrains Mono, monospace";
+  c.textAlign = "center";
+  c.fillText("LESS NOISE. MORE SIGNAL.  ·  247 BUILDERS  ·  GOA", W / 2, H - 22);
+  c.textAlign = "left";
+}
+
 function renderCard() {
   const canvas = $("canvas");
   if (!canvas) return;
@@ -737,14 +1356,26 @@ function renderCard() {
     canvas.height = PFP.H;
     c.clearRect(0, 0, PFP.W, PFP.H);
     drawPfp(c);
+  } else if (state.format === "team") {
+    canvas.width = TEAM.W;
+    canvas.height = TEAM.H;
+    c.clearRect(0, 0, TEAM.W, TEAM.H);
+    drawTeam(c);
+  } else if (isCollectibleCard()) {
+    canvas.width = SIGNAL.W;
+    canvas.height = SIGNAL.H;
+    c.clearRect(0, 0, SIGNAL.W, SIGNAL.H);
+    drawPassCollectible(c);
   } else {
+    // relay (default) or official — landscape
     canvas.width = PASS.W;
     canvas.height = PASS.H;
     c.clearRect(0, 0, PASS.W, PASS.H);
-    drawPass(c);
+    if (isOfficialCard()) drawPassOfficial(c);
+    else drawPassRelay(c);
   }
-  const ready = !!state.image;
-  ["btn-dl", "btn-share"].forEach((id) => {
+  const ready = !!state.image || (state.format === "team" && state.teamSlots.some((s) => s.image));
+  ["btn-dl", "btn-share", "btn-dl-mobile", "btn-share-mobile"].forEach((id) => {
     const el = $(id);
     if (el) el.disabled = !ready;
   });
@@ -758,7 +1389,8 @@ function blobPng() {
 
 function fname() {
   const slug = (state.name || "builder").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 18);
-  const kind = state.format === "pfp" ? "pfp" : "builder-id";
+  const kind =
+    state.format === "pfp" ? "pfp" : state.format === "team" ? "team" : "builder-id";
   return `hhgoa-${kind}-${slug || "frame"}.png`;
 }
 
@@ -780,7 +1412,7 @@ async function download() {
   a.download = fname();
   a.click();
   setTimeout(() => URL.revokeObjectURL(u), 1500);
-  toast("Downloaded · share with " + HASHTAG);
+  toast("Downloaded");
 }
 
 async function shareX() {
@@ -1275,13 +1907,33 @@ function closeDrawer() {
 
 /* ── form ── */
 function sync() {
-  state.name = $("f-name").value;
-  state.stack = $("f-stack").value;
+  state.name = $("f-name")?.value || "";
+  state.stack = $("f-stack")?.value || "";
   state.titleId = $("f-title")?.value || state.titleId;
-  state.theme = $("f-theme")?.value || state.theme || "emerald";
-  state.handle = $("f-handle").value;
-  state.city = $("f-city").value;
-  $("id-display").textContent = state.idNumber;
+  state.theme = $("f-theme")?.value || state.theme || "relay";
+  state.filter = $("f-filter")?.value || state.filter || "natural";
+  state.finish = $("f-finish")?.value || state.finish || "goa";
+  state.handle = $("f-handle")?.value || "";
+  state.city = $("f-city")?.value || "";
+  state.teamCount = Math.min(3, Math.max(1, +($("f-team-count")?.value || 1)));
+  for (let i = 0; i < 3; i++) {
+    const n = $(`t-name-${i}`);
+    const s = $(`t-stack-${i}`);
+    if (n) state.teamSlots[i].name = n.value;
+    if (s) state.teamSlots[i].stack = s.value;
+  }
+  // keep slot 0 in sync with primary fields
+  state.teamSlots[0].name = state.name || state.teamSlots[0].name;
+  state.teamSlots[0].stack = state.stack || state.teamSlots[0].stack;
+  if (state.image) state.teamSlots[0].image = state.image;
+  if ($("id-display")) $("id-display").textContent = state.idNumber;
+  if ($("fields-team")) {
+    for (let i = 1; i < 3; i++) {
+      const row = $(`team-row-${i}`);
+      if (row) row.hidden = i >= state.teamCount;
+    }
+  }
+  refreshPreviewChrome();
   renderCard();
 }
 
@@ -1289,13 +1941,79 @@ async function onFile(file) {
   if (!file) return;
   try {
     state.image = await fileToImage(file);
-    $("thumb").src = state.objectUrl;
-    $("drop-empty").hidden = true;
-    $("drop-has").hidden = false;
+    state.teamSlots[0].image = state.image;
+    if ($("thumb")) $("thumb").src = state.objectUrl;
+    if ($("drop-empty")) $("drop-empty").hidden = true;
+    if ($("drop-has")) $("drop-has").hidden = false;
     renderCard();
   } catch (e) {
-    alert(e.message || "Could not load image");
+    toast(e.message || "Could not load image");
   }
+}
+
+async function loadSamplePhoto() {
+  try {
+    // Use hacker-man as sample if no photo asset
+    const img = await loadImg("./public/assets/hacker-man.svg");
+    state.image = img;
+    state.teamSlots[0].image = img;
+    if ($("thumb")) {
+      $("thumb").src = "./public/assets/hacker-man.svg";
+    }
+    if ($("drop-empty")) $("drop-empty").hidden = true;
+    if ($("drop-has")) $("drop-has").hidden = false;
+    toast("Sample loaded — swap anytime");
+    renderCard();
+  } catch {
+    toast("Sample unavailable");
+  }
+}
+
+async function openWebcam() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    return toast("Webcam not available — use Upload");
+  }
+  const modal = $("webcam-modal");
+  const video = $("webcam-video");
+  if (!modal || !video) return toast("Webcam UI missing");
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    });
+    video.srcObject = stream;
+    await video.play();
+    modal.hidden = false;
+    state._webcamStream = stream;
+  } catch {
+    toast("Camera permission denied");
+  }
+}
+
+function closeWebcam() {
+  const modal = $("webcam-modal");
+  if (modal) modal.hidden = true;
+  const video = $("webcam-video");
+  if (state._webcamStream) {
+    state._webcamStream.getTracks().forEach((t) => t.stop());
+    state._webcamStream = null;
+  }
+  if (video) video.srcObject = null;
+}
+
+async function captureWebcam() {
+  const video = $("webcam-video");
+  if (!video || !video.videoWidth) return toast("Camera not ready");
+  const off = document.createElement("canvas");
+  off.width = video.videoWidth;
+  off.height = video.videoHeight;
+  off.getContext("2d").drawImage(video, 0, 0);
+  closeWebcam();
+  const blob = await new Promise((r) => off.toBlob(r, "image/jpeg", 0.92));
+  if (!blob) return toast("Capture failed");
+  const file = new File([blob], "selfie.jpg", { type: "image/jpeg" });
+  await onFile(file);
+  toast("Selfie captured");
 }
 
 function bind() {
@@ -1304,41 +2022,138 @@ function bind() {
     show("studio");
   };
 
-  $("nav-create").onclick = () => goStudio();
-  $("hero-create").onclick = () => goStudio();
-  $("nav-map").onclick = () => show("map");
-  $("hero-map").onclick = () => show("map");
-  $("studio-home").onclick = () => show("landing");
-  $("studio-map").onclick = () => show("map");
-  $("map-back").onclick = () => show(state.image ? "studio" : "landing");
-  $("map-create").onclick = () => show("studio");
+  $("nav-create")?.addEventListener("click", () => goStudio());
+  $("hero-create")?.addEventListener("click", () => goStudio());
+  $("nav-map")?.addEventListener("click", () => show("map"));
+  $("hero-map")?.addEventListener("click", () => show("map"));
+  $("studio-home")?.addEventListener("click", () => show("landing"));
+  $("studio-map")?.addEventListener("click", () => show("map"));
+  $("map-back")?.addEventListener("click", () => show(state.image ? "studio" : "landing"));
+  $("map-create")?.addEventListener("click", () => show("studio"));
 
-  document.querySelectorAll(".format-card[data-format]").forEach((el) => {
-    el.addEventListener("click", () => goStudio(el.dataset.format));
+  const openFormat = (el) => {
+    if (el.dataset.theme) setTheme(el.dataset.theme);
+    document.querySelectorAll(".format-chip, .format-card").forEach((c) => {
+      const on = c === el;
+      c.classList.toggle("on", on);
+      if (c.hasAttribute("aria-pressed")) c.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    goStudio(el.dataset.format);
+  };
+  document.querySelectorAll(".format-chip[data-format], .format-card[data-format]").forEach((el) => {
+    el.addEventListener("click", () => openFormat(el));
   });
-  $("tab-pass").onclick = () => setFormat("pass");
-  $("tab-pfp").onclick = () => setFormat("pfp");
+  document.querySelectorAll(".pill[data-format]").forEach((el) => {
+    el.addEventListener("click", () => {
+      if (el.dataset.format === "pass" && state.theme === "signal") {
+        /* keep signal theme if already on signal */
+      } else if (el.dataset.format === "pass" && !["official", "relay", "signal", "wave", "sand", "neon"].includes(state.theme)) {
+        setTheme("official");
+      } else if (el.dataset.format === "pass" && state.format !== "pass") {
+        setTheme(state.theme === "signal" ? "official" : state.theme || "official");
+      }
+      setFormat(el.dataset.format);
+    });
+  });
+  document.querySelectorAll("#theme-pills .pill[data-theme]").forEach((el) => {
+    el.addEventListener("click", () => {
+      setFormat("pass");
+      setTheme(el.dataset.theme);
+    });
+  });
+  document.querySelectorAll("#filter-pills .pill[data-filter]").forEach((el) => {
+    el.addEventListener("click", () => setFilter(el.dataset.filter));
+  });
+  document.querySelectorAll("#finish-pills .pill[data-finish]").forEach((el) => {
+    el.addEventListener("click", () => setFinish(el.dataset.finish));
+  });
 
   const drop = $("drop");
   const file = $("file");
-  drop.onclick = () => file.click();
-  $("rephoto").onclick = (e) => {
-    e.stopPropagation();
-    file.click();
-  };
-  file.onchange = () => onFile(file.files?.[0]);
-  drop.ondragover = (e) => {
-    e.preventDefault();
-    drop.classList.add("drag");
-  };
-  drop.ondragleave = () => drop.classList.remove("drag");
-  drop.ondrop = (e) => {
-    e.preventDefault();
-    drop.classList.remove("drag");
-    onFile(e.dataTransfer.files?.[0]);
-  };
+  const openFilePicker = () => file?.click();
+  if (drop && file) {
+    drop.onclick = (e) => {
+      if (e.target.closest("#rephoto")) return;
+      openFilePicker();
+    };
+    drop.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openFilePicker();
+      }
+    });
+    $("rephoto")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openFilePicker();
+    });
+    $("btn-pick-file")?.addEventListener("click", openFilePicker);
+    file.onchange = () => onFile(file.files?.[0]);
+    drop.ondragover = (e) => {
+      e.preventDefault();
+      drop.classList.add("drag");
+    };
+    drop.ondragleave = () => drop.classList.remove("drag");
+    drop.ondrop = (e) => {
+      e.preventDefault();
+      drop.classList.remove("drag");
+      onFile(e.dataTransfer.files?.[0]);
+    };
+  }
+  // Preview stage also accepts click / drop
+  const wrap = $("preview-wrap");
+  if (wrap && file) {
+    wrap.addEventListener("click", (e) => {
+      if (e.target.closest("button")) return;
+      openFilePicker();
+    });
+    wrap.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openFilePicker();
+      }
+    });
+    wrap.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      wrap.classList.add("drag");
+    });
+    wrap.addEventListener("dragleave", () => wrap.classList.remove("drag"));
+    wrap.addEventListener("drop", (e) => {
+      e.preventDefault();
+      wrap.classList.remove("drag");
+      onFile(e.dataTransfer.files?.[0]);
+    });
+  }
 
-  ["f-name", "f-stack", "f-title", "f-theme", "f-handle", "f-city"].forEach((id) => {
+  // Webcam selfie
+  $("btn-webcam")?.addEventListener("click", openWebcam);
+  $("btn-sample")?.addEventListener("click", loadSamplePhoto);
+  $("webcam-capture")?.addEventListener("click", captureWebcam);
+  $("webcam-cancel")?.addEventListener("click", closeWebcam);
+
+  // Team photo slots
+  for (let i = 1; i < 3; i++) {
+    const inp = $(`t-file-${i}`);
+    if (!inp) continue;
+    inp.onchange = async () => {
+      const f = inp.files?.[0];
+      if (!f) return;
+      try {
+        const img = await fileToImage(f);
+        state.teamSlots[i].image = img;
+        state.teamSlots[i].objectUrl = state.objectUrl;
+        const th = $(`t-thumb-${i}`);
+        if (th) {
+          th.src = state.objectUrl;
+          th.hidden = false;
+        }
+        renderCard();
+      } catch (e) {
+        toast(e.message || "Could not load image");
+      }
+    };
+  }
+
+  ["f-name", "f-stack", "f-title", "f-theme", "f-filter", "f-finish", "f-handle", "f-city", "f-team-count", "t-name-1", "t-stack-1", "t-name-2", "t-stack-2"].forEach((id) => {
     const el = $(id);
     if (!el) return;
     el.addEventListener("input", sync);
@@ -1367,15 +2182,24 @@ function bind() {
   });
   $("sound-btn")?.addEventListener("click", () => {
     state.soundOn = !state.soundOn;
-    const btn = $("sound-btn");
-    if (btn) btn.textContent = state.soundOn ? "🔊" : "🔇";
+    $("sound-btn")?.classList.toggle("off", !state.soundOn);
     toast(state.soundOn ? "Sound on" : "Sound off");
   });
 
+  // Mobile dock
+  $("mdock-home")?.addEventListener("click", () => show("landing"));
+  $("mdock-create")?.addEventListener("click", () => show("studio"));
+  $("mdock-map")?.addEventListener("click", () => show("map"));
+
   const titleSel = $("f-title");
-  titleSel.innerHTML = CLASSES.map(
-    (c) => `<option value="${c.id}" ${c.id === state.titleId ? "selected" : ""}>${c.label}</option>`
-  ).join("");
+  if (titleSel) {
+    titleSel.innerHTML = CLASSES.map(
+      (c) => `<option value="${c.id}" ${c.id === state.titleId ? "selected" : ""}>${c.label}</option>`
+    ).join("");
+  }
+  // Align UI pills with default Builder Pass theme
+  setTheme(state.theme || "official");
+  setFormat(state.format || "pass");
 
   $("reroll").onclick = () => {
     state.titleId = CLASSES[(Math.random() * CLASSES.length) | 0].id;
@@ -1401,8 +2225,10 @@ function bind() {
     renderCard();
   };
 
-  $("btn-dl").onclick = download;
-  $("btn-share").onclick = shareX;
+  $("btn-dl")?.addEventListener("click", download);
+  $("btn-share")?.addEventListener("click", shareX);
+  $("btn-dl-mobile")?.addEventListener("click", download);
+  $("btn-share-mobile")?.addEventListener("click", shareX);
   $("btn-pick").onclick = openPicker;
   $("btn-pin").onclick = dropPin;
   $("btn-gps").onclick = () => {
@@ -1475,6 +2301,18 @@ async function main() {
   } catch { /* */ }
   try {
     state.goaMark = await loadImg("./public/assets/goa_hindi.svg");
+  } catch { /* */ }
+  try {
+    state.sealMark = await loadImg("./public/assets/seal-goa.svg");
+  } catch { /* */ }
+  try {
+    state.houseMark = await loadImg("./public/assets/hh-house-mark.svg");
+  } catch { /* */ }
+  try {
+    state.hackerMan = await loadImg("./public/assets/hacker-man.svg");
+  } catch { /* */ }
+  try {
+    state.energyBadge = await loadImg("./public/assets/energy-badge.svg");
   } catch { /* */ }
   await Promise.all(
     CLASSES.map(async (cl) => {

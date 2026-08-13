@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Hacker House">
+  <rect width="128" height="128" rx="20" fill="#0a0a0a"/>
+  <rect x="6" y="6" width="116" height="116" rx="16" fill="none" stroke="#fee101" stroke-width="3"/>
+  <path d="M22 76 L64 36 L106 76 V108 H22 Z" fill="#1a1a1a" stroke="#fee101" stroke-width="3"/>
+  <path d="M50 108 V78 H78 V108" fill="#0a0a0a" stroke="#fee101" stroke-width="2.5"/>
+  <rect x="54" y="52" width="12" height="12" fill="#fee101"/>
+  <rect x="74" y="52" width="12" height="12" fill="#ff0080"/>
+  <path d="M64 36 L64 24 M56 30 H72" stroke="#fee101" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="64" cy="22" r="4" fill="#ff0080"/>
+  <text x="64" y="102" text-anchor="middle" font-family="Georgia,serif" font-size="11" font-weight="700" fill="#fee101" letter-spacing="1">HHG</text>
+</svg>

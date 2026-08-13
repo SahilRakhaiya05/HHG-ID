@@ -8,10 +8,10 @@
   <meta property="og:title" content="Hacker Tracker · HH Goa 2026" />
   <meta property="og:description" content="Builder Pass &amp; PFP frame for Hacker House Goa 2026. #FrameInGoa" />
   <meta property="og:image" content="./public/assets/BuilderPass.png" />
-  <meta name="theme-color" content="#061326" />
+  <meta name="theme-color" content="#0b6839" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Imbue:opsz,wght@10..100,500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Imbue:opsz,wght@10..100,500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700;800&family=Victor+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="./styles.css" />
 </head>
@@ -48,10 +48,10 @@
         <img src="./public/assets/icon-filter.svg" alt="" width="28" height="28" />
       </button>
 
-      <!-- hanging wordmark -->
+      <!-- hanging wordmark + radar (Spidey-style hang) -->
       <div class="wordmark-hang">
         <img src="./public/assets/wordmark-badge.svg" alt="Hacker Tracker" class="wordmark-img" />
-        <span class="wordmark-thread" aria-hidden="true"></span>
+        <img src="./public/assets/hang-radar.svg" alt="" class="hang-orb" aria-hidden="true" />
       </div>
 
       <!-- left side tools -->
@@ -65,159 +65,197 @@
         <button type="button" class="tool-btn" id="tool-log" title="Activity log">
           <img src="./public/assets/icon-log.svg" alt="" width="28" height="28" />
         </button>
+        <button type="button" class="tool-btn tool-deco" title="Goa" tabindex="-1" aria-hidden="true">
+          <img src="./public/assets/goa-palm.svg" alt="" width="26" height="26" />
+        </button>
       </div>
 
       <!-- SCREEN -->
       <div class="console-screen" id="console-screen">
 
         <!-- ========== LANDING ========== -->
-        <div id="landing" class="view landing">
+        <div id="landing" class="view landing landing-min">
           <div class="land-bg" aria-hidden="true">
-            <img src="./public/assets/goa-tracker-hero.png" alt="" class="land-img" />
+            <img src="./public/assets/Sun-rise.png" alt="" class="land-img" onerror="this.src='./public/assets/sunrise-comp.png'" />
             <div class="land-wash"></div>
-            <div class="land-grid"></div>
           </div>
 
           <header class="topnav">
             <a class="brand" href="https://hhgoa.com/" target="_blank" rel="noopener">
-              <img src="./public/assets/2-47.svg" alt="" width="28" height="28" />
-              <span>GOA · 28–31 OCT</span>
+              <img src="./public/assets/hacker-tracker-mark.svg" alt="" width="28" height="28" />
+              <div class="brand-text">
+                <strong>HACKER TRACKER</strong>
+                <span>GOA · 28–31 OCT 2026</span>
+              </div>
             </a>
             <div class="topnav-actions">
               <button type="button" class="btn btn-ghost btn-sm" id="nav-map">Map</button>
-              <button type="button" class="btn btn-y btn-sm" id="nav-create">Create</button>
+              <a class="btn btn-ghost btn-sm" href="https://hacker-house-goa-2026.devfolio.co/" target="_blank" rel="noopener">Apply</a>
+              <button type="button" class="btn btn-y btn-sm" id="nav-create">Make yours</button>
             </div>
           </header>
 
-          <section class="hero">
+          <section class="hero hero-min">
             <div class="hero-copy">
-              <p class="eyebrow">TASK #1 · #FrameInGoa</p>
-              <h1>Put your face<br />in the <em>frame</em></h1>
-              <p class="lead">
-                Upload a photo. Mint a branded HH Goa 2026 graphic —
-                <strong>Builder ID</strong> or <strong>PFP frame</strong>.
-                Download. Share on X. Pin yourself on the world map.
-              </p>
+              <p class="eyebrow">#FrameInGoa</p>
+              <h1>one photo.<br /><em>one frame.</em><br />everything in place.</h1>
+              <p class="lead">Build a free Builder Pass, PFP, or team frame in your browser. No account. Nothing uploaded until you share.</p>
               <div class="hero-btns">
-                <button type="button" class="btn btn-y" id="hero-create">Create my frame →</button>
-                <button type="button" class="btn btn-ghost" id="hero-map">Open builder map</button>
+                <button type="button" class="btn btn-y" id="hero-create">Make yours</button>
+                <button type="button" class="btn btn-ghost" id="hero-map">Open map</button>
               </div>
-              <div class="signal-strip">
-                <i class="pulse"></i>
-                <b>LIVE</b>
-                <span>247 BUILDERS</span>
-                <i>·</i>
-                <span>4 DAYS</span>
-                <i>·</i>
-                <span>LESS NOISE · MORE SIGNAL</span>
-              </div>
+              <p class="hero-meta">247 seats · apply on <a href="https://hacker-house-goa-2026.devfolio.co/" target="_blank" rel="noopener">Devfolio</a></p>
             </div>
 
-            <div class="hero-radar" aria-hidden="true">
-              <img src="./public/assets/hacker-tracker-console.png" alt="" />
-              <div class="radar-sweep"></div>
-              <span class="radar-label r1">HHG HQ</span>
-              <span class="radar-label r2">NODE 247</span>
+            <div class="hero-preview">
+              <div class="hero-bezel">
+                <img src="./public/assets/BuilderPass.png" alt="Example Builder Pass" />
+              </div>
             </div>
-
-            <ul class="stats">
-              <li><b>247</b><span>Builders</span></li>
-              <li><b>4</b><span>Days</span></li>
-              <li><b>28–31</b><span>Oct 2026</span></li>
-              <li><b>Goa</b><span>India</span></li>
-            </ul>
           </section>
 
-          <section class="formats">
-            <div class="section-kicker">SELECT A MODULE</div>
-            <h2>Two formats</h2>
-            <div class="format-grid">
-              <button type="button" class="format-card" data-format="pfp">
-                <div class="format-visual pfp-vis"></div>
-                <h3>Format A · PFP Frame</h3>
-                <p>Circular profile picture for X. Your photo front and center, HH Goa branding wraps it.</p>
-                <span>1080 × 1080</span>
+          <section class="formats formats-min" id="modules" aria-label="Formats">
+            <p class="formats-label">Choose a format</p>
+            <div class="format-row">
+              <button type="button" class="format-chip on" data-format="pass" data-theme="official" aria-pressed="true">
+                <img src="./public/assets/hacker-man.svg" alt="" width="22" height="22" />
+                <span>Builder Pass</span>
               </button>
-              <button type="button" class="format-card" data-format="pass">
-                <div class="format-visual pass-vis">
-                  <img src="./public/assets/builder-id-card-ref.png" alt="" />
-                </div>
-                <h3>Format B · Builder ID</h3>
-                <p>Collectible badge card — photo, name, stack, class. Pokémon-style signed border.</p>
-                <span>1536 × 1024</span>
+              <button type="button" class="format-chip" data-format="pass" data-theme="relay" aria-pressed="false">
+                <img src="./public/assets/hacker-tracker-mark.svg" alt="" width="22" height="22" />
+                <span>Builder ID</span>
+              </button>
+              <button type="button" class="format-chip" data-format="pfp" aria-pressed="false">
+                <img src="./public/assets/seal-goa.svg" alt="" width="22" height="22" />
+                <span>PFP frame</span>
+              </button>
+              <button type="button" class="format-chip" data-format="team" aria-pressed="false">
+                <img src="./public/assets/pin-builder.svg" alt="" width="22" height="22" />
+                <span>Team frame</span>
+              </button>
+              <button type="button" class="format-chip" data-format="pass" data-theme="signal" aria-pressed="false">
+                <img src="./public/assets/energy-badge.svg" alt="" width="22" height="22" />
+                <span>Signal</span>
               </button>
             </div>
           </section>
 
-          <section class="how">
-            <h2>One pass · start to finish</h2>
-            <ol class="flow">
-              <li><strong>Upload</strong> JPG · PNG · HEIC — any crop</li>
-              <li><strong>Personalize</strong> name · stack · title · theme</li>
-              <li><strong>Download</strong> real PNG instantly</li>
-              <li><strong>Share</strong> pre-filled X caption + #FrameInGoa</li>
-              <li><strong>Pin</strong> drop yourself on the world map</li>
-            </ol>
-          </section>
-
-          <footer class="foot">
-            <span>Less noise. More signal.</span>
+          <footer class="foot foot-min">
             <a href="https://hhgoa.com/" target="_blank" rel="noopener">hhgoa.com</a>
+            <a href="https://hacker-house-goa-2026.devfolio.co/" target="_blank" rel="noopener">Devfolio</a>
             <a href="./admin.html">Admin</a>
             <strong>#FrameInGoa</strong>
           </footer>
         </div>
 
-        <!-- ========== STUDIO ========== -->
+        <!-- ========== STUDIO · frame-in-goa flow ========== -->
         <div id="studio" class="view studio" hidden>
           <header class="bar">
             <button type="button" class="link-btn" id="studio-home">← Home</button>
-            <strong class="bar-title">ID STUDIO</strong>
+            <strong class="bar-title">Studio</strong>
             <button type="button" class="btn btn-sm btn-ghost" id="studio-map">Map</button>
           </header>
 
+          <div class="studio-intro">
+            <p class="kicker">The studio</p>
+            <h2>Upload a photo. Take the frame. Post it.</h2>
+            <p class="studio-lede">JPG, PNG, WebP, HEIC — any shape. Drawn on your device so the picture never leaves it.</p>
+          </div>
+
           <div class="studio-layout">
+            <!-- Preview sticky (frame-in-goa: stage first) -->
+            <section class="preview-col">
+              <div class="preview-head">
+                <h2 id="preview-label">Builder Pass</h2>
+                <span id="preview-size">1536 × 1024</span>
+              </div>
+              <div class="preview-wrap official-frame" id="preview-wrap" role="button" tabindex="0" title="Drop a photo or click to upload" aria-label="Frame preview. Click or drop a photo.">
+                <canvas id="canvas" width="1536" height="1024" aria-label="Builder Pass preview"></canvas>
+              </div>
+              <p class="preview-hint" id="preview-hint">Tap the frame, or drop a photo anywhere in the studio</p>
+              <div class="preview-actions">
+                <button type="button" class="btn btn-y" id="btn-dl" disabled>Download PNG</button>
+                <button type="button" class="btn btn-ghost" id="btn-share" disabled>Share to X</button>
+              </div>
+            </section>
+
             <aside class="form-col">
-              <div class="seg" role="tablist">
-                <button type="button" class="seg-btn on" data-format="pass" id="tab-pass">Builder ID</button>
-                <button type="button" class="seg-btn" data-format="pfp" id="tab-pfp">PFP Frame</button>
-              </div>
-
-              <div class="drop" id="drop" tabindex="0">
-                <input type="file" id="file" accept="image/*,.heic,.heif" hidden />
-                <div id="drop-empty">
-                  <div class="drop-ico">↑</div>
-                  <strong>Upload photo</strong>
-                  <span>JPG · PNG · WEBP · HEIC</span>
+              <!-- 1 · Format -->
+              <section class="stu-block">
+                <header class="stu-head">
+                  <span class="kicker kicker-pink">Choose</span>
+                  <h3>Format</h3>
+                </header>
+                <div class="pill-row" role="group" aria-label="Format">
+                  <button type="button" class="pill on" data-format="pass" id="tab-pass" aria-pressed="true">Builder Pass</button>
+                  <button type="button" class="pill" data-format="pfp" id="tab-pfp" aria-pressed="false">PFP frame</button>
+                  <button type="button" class="pill" data-format="team" id="tab-team" aria-pressed="false">Team frame</button>
                 </div>
-                <div id="drop-has" hidden>
-                  <img id="thumb" alt="" />
-                  <button type="button" class="link-btn" id="rephoto">Change photo</button>
-                </div>
-              </div>
+              </section>
 
-              <div id="fields-pass" class="fields">
+              <!-- 2 · Photo -->
+              <section class="stu-block">
+                <header class="stu-head">
+                  <span class="kicker kicker-pink">Upload</span>
+                  <h3>Photo</h3>
+                </header>
+                <div class="drop" id="drop" tabindex="0" role="button" aria-label="Upload photo">
+                  <input type="file" id="file" accept="image/*,.heic,.heif" hidden />
+                  <div id="drop-empty">
+                    <div class="drop-ico">↑</div>
+                    <strong>Drop photo here</strong>
+                    <span>or click to choose a file</span>
+                  </div>
+                  <div id="drop-has" hidden>
+                    <img id="thumb" alt="Your photo" />
+                    <button type="button" class="link-btn" id="rephoto">Change photo</button>
+                  </div>
+                </div>
+                <div class="btn-row photo-actions">
+                  <button type="button" class="btn btn-pink btn-sm" id="btn-pick-file">Upload</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-webcam">Selfie</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="btn-sample">Sample</button>
+                </div>
+                <p class="hint-soft">Nothing is uploaded until you press Share.</p>
+              </section>
+
+              <!-- 3 · Details -->
+              <div id="fields-pass" class="stu-block fields">
+                <header class="stu-head">
+                  <span class="kicker kicker-pink">Details</span>
+                  <h3>Your card</h3>
+                </header>
                 <label class="field">Name
-                  <input id="f-name" maxlength="36" placeholder="Your name on the card" autocomplete="name" />
+                  <input id="f-name" maxlength="36" placeholder="Name on the card" autocomplete="name" />
                 </label>
-                <label class="field">Stack / role
+                <label class="field">Stack
                   <input id="f-stack" maxlength="40" placeholder="e.g. Full-stack · AI" />
                 </label>
-                <label class="field">Builder title
+                <label class="field">Builder class
                   <div class="field-row">
-                    <select id="f-title"></select>
-                    <button type="button" class="icon-btn" id="reroll" title="Shuffle">↻</button>
+                    <select id="f-title" aria-label="Builder class"></select>
+                    <button type="button" class="icon-btn" id="reroll" title="Shuffle class" aria-label="Shuffle class">↻</button>
                   </div>
                 </label>
-                <label class="field">Card theme
-                  <select id="f-theme">
-                    <option value="emerald">Emerald · Classic</option>
-                    <option value="sunset">Sunset · Gold foil</option>
-                    <option value="ocean">Ocean · Cyan glass</option>
-                    <option value="neon">Neon · Night raid</option>
-                    <option value="holo">Holo · Prism foil</option>
+                <div id="fields-style">
+                  <p class="label">Card style</p>
+                  <div class="pill-row" role="group" aria-label="Card style" id="theme-pills">
+                    <button type="button" class="pill on" data-theme="official" aria-pressed="true">Builder Pass</button>
+                    <button type="button" class="pill" data-theme="relay" aria-pressed="false">Builder ID</button>
+                    <button type="button" class="pill" data-theme="signal" aria-pressed="false">Signal</button>
+                    <button type="button" class="pill" data-theme="wave" aria-pressed="false">Wave</button>
+                    <button type="button" class="pill" data-theme="sand" aria-pressed="false">Sand</button>
+                    <button type="button" class="pill" data-theme="neon" aria-pressed="false">Neon</button>
+                  </div>
+                  <select id="f-theme" class="sr-only" tabindex="-1" aria-hidden="true">
+                    <option value="official" selected>Builder Pass</option>
+                    <option value="relay">Builder ID</option>
+                    <option value="signal">Signal</option>
+                    <option value="wave">Wave</option>
+                    <option value="sand">Sand</option>
+                    <option value="neon">Neon</option>
                   </select>
-                </label>
+                </div>
                 <div class="field-2">
                   <label class="field">X handle
                     <input id="f-handle" maxlength="28" placeholder="@you" />
@@ -229,47 +267,107 @@
                 <div class="id-chip">
                   <span>ID</span>
                   <code id="id-display">HHG-2026-····</code>
-                  <button type="button" class="link-btn" id="regen-id">New</button>
+                  <button type="button" class="link-btn" id="regen-id">New ID</button>
                 </div>
               </div>
 
-              <div class="crop">
-                <p class="label">Photo fit</p>
-                <label>Zoom <input type="range" id="zoom" min="1" max="2.5" step="0.01" value="1.15" /></label>
-                <label>Pan X <input type="range" id="panx" min="-45" max="45" step="1" value="0" /></label>
-                <label>Pan Y <input type="range" id="pany" min="-45" max="45" step="1" value="0" /></label>
+              <div id="fields-team" class="stu-block fields" hidden>
+                <header class="stu-head">
+                  <span class="kicker kicker-pink">Crew</span>
+                  <h3>Team frame</h3>
+                </header>
+                <label class="field">Team size
+                  <select id="f-team-count">
+                    <option value="1">1 builder</option>
+                    <option value="2">2 builders</option>
+                    <option value="3">3 builders</option>
+                  </select>
+                </label>
+                <p class="hint-soft">Builder 1 uses the main photo and name above.</p>
+                <div id="team-row-1" hidden>
+                  <label class="field">Builder 2 photo
+                    <input type="file" id="t-file-1" accept="image/*" />
+                  </label>
+                  <img id="t-thumb-1" alt="" hidden class="team-thumb" />
+                  <div class="field-2">
+                    <label class="field">Name<input id="t-name-1" maxlength="28" placeholder="Name" /></label>
+                    <label class="field">Stack<input id="t-stack-1" maxlength="28" placeholder="Stack" /></label>
+                  </div>
+                </div>
+                <div id="team-row-2" hidden>
+                  <label class="field">Builder 3 photo
+                    <input type="file" id="t-file-2" accept="image/*" />
+                  </label>
+                  <img id="t-thumb-2" alt="" hidden class="team-thumb" />
+                  <div class="field-2">
+                    <label class="field">Name<input id="t-name-2" maxlength="28" placeholder="Name" /></label>
+                    <label class="field">Stack<input id="t-stack-2" maxlength="28" placeholder="Stack" /></label>
+                  </div>
+                </div>
               </div>
 
-              <div class="pin-block">
-                <p class="label">Map pin <span class="opt">(optional)</span></p>
-                <p class="pin-hint" id="pin-hint">Pick a spot on the map, then confirm pin.</p>
+              <!-- 4 · Look -->
+              <section class="stu-block look">
+                <header class="stu-head">
+                  <span class="kicker kicker-pink">Style</span>
+                  <h3>Finish</h3>
+                </header>
+                <p class="label">Photo treatment</p>
+                <div class="pill-row" role="group" aria-label="Photo treatment" id="filter-pills">
+                  <button type="button" class="pill on" data-filter="natural" aria-pressed="true">Natural</button>
+                  <button type="button" class="pill" data-filter="cel" aria-pressed="false">Cel</button>
+                  <button type="button" class="pill" data-filter="riso" aria-pressed="false">Riso</button>
+                </div>
+                <select id="f-filter" class="sr-only" tabindex="-1" aria-hidden="true">
+                  <option value="natural" selected>Natural</option>
+                  <option value="cel">Cel</option>
+                  <option value="riso">Riso</option>
+                </select>
+                <p class="hint-soft">Cel flattens tone into bands. Riso splits into two brand inks.</p>
+                <p class="label">Theme</p>
+                <div class="pill-row" role="group" aria-label="Finish theme" id="finish-pills">
+                  <button type="button" class="pill on" data-finish="goa" aria-pressed="true">Goa</button>
+                  <button type="button" class="pill" data-finish="night" aria-pressed="false">Night</button>
+                  <button type="button" class="pill" data-finish="sand" aria-pressed="false">Sand</button>
+                </div>
+                <select id="f-finish" class="sr-only" tabindex="-1" aria-hidden="true">
+                  <option value="goa" selected>Goa</option>
+                  <option value="night">Night</option>
+                  <option value="sand">Sand</option>
+                </select>
+              </section>
+
+              <!-- 5 · Fit -->
+              <section class="stu-block crop">
+                <header class="stu-head">
+                  <span class="kicker kicker-pink">Frame</span>
+                  <h3>Photo fit</h3>
+                </header>
+                <label>Zoom <input type="range" id="zoom" min="1" max="2.5" step="0.01" value="1.15" aria-valuemin="1" aria-valuemax="2.5" /></label>
+                <label>Pan X <input type="range" id="panx" min="-45" max="45" step="1" value="0" /></label>
+                <label>Pan Y <input type="range" id="pany" min="-45" max="45" step="1" value="0" /></label>
+              </section>
+
+              <!-- 6 · Map (optional) -->
+              <section class="stu-block pin-block">
+                <header class="stu-head">
+                  <span class="kicker kicker-pink">Map</span>
+                  <h3>Pin <span class="opt">(optional)</span></h3>
+                </header>
+                <p class="pin-hint" id="pin-hint">Pick a spot, then pin yourself on the builder map.</p>
                 <div class="btn-row">
                   <button type="button" class="btn btn-ghost btn-sm" id="btn-pick">Pick location</button>
                   <button type="button" class="btn btn-ghost btn-sm" id="btn-gps">Use GPS</button>
                 </div>
                 <button type="button" class="btn btn-y" id="btn-pin" disabled>Pin me on map</button>
-              </div>
+              </section>
 
-              <div class="actions-stack">
-                <button type="button" class="btn btn-y" id="btn-dl" disabled>Download PNG</button>
-                <button type="button" class="btn btn-ghost" id="btn-share" disabled>Share to X · #FrameInGoa</button>
+              <div class="actions-stack actions-stack-mobile">
+                <button type="button" class="btn btn-y" id="btn-dl-mobile" disabled>Download PNG</button>
+                <button type="button" class="btn btn-ghost" id="btn-share-mobile" disabled>Share to X</button>
               </div>
+              <p class="hint-soft">Frames render on-device. Sharing may upload finished art only if you opt in via Supabase pin.</p>
             </aside>
-
-            <section class="preview-col">
-              <div class="preview-head">
-                <h2 id="preview-label">Builder ID</h2>
-                <span id="preview-size">1536 × 1024</span>
-              </div>
-              <div class="preview-wrap poke-frame" id="preview-wrap">
-                <div class="poke-shine" aria-hidden="true"></div>
-                <canvas id="canvas" width="1536" height="1024"></canvas>
-                <div class="poke-corners" aria-hidden="true">
-                  <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
-                </div>
-              </div>
-              <p class="preview-hint">Collectible-style signed border · export is full resolution PNG</p>
-            </section>
           </div>
         </div>
 
@@ -374,22 +472,42 @@
 
       <!-- bottom status bar -->
       <div class="console-statusbar">
+        <img src="./public/assets/goa-wave.svg" alt="" class="status-wave" aria-hidden="true" />
         <div class="status-marquee" id="status-marquee">
           <span>WELCOME TO HACKER TRACKER · INTERACT WITH THE MAP TO VIEW BUILDERS WORLDWIDE · MINT YOUR BUILDER ID · SHARE WITH #FrameInGoa · LESS NOISE · MORE SIGNAL · HH GOA 28–31 OCT 2026 · </span>
           <span>WELCOME TO HACKER TRACKER · INTERACT WITH THE MAP TO VIEW BUILDERS WORLDWIDE · MINT YOUR BUILDER ID · SHARE WITH #FrameInGoa · LESS NOISE · MORE SIGNAL · HH GOA 28–31 OCT 2026 · </span>
         </div>
-        <button type="button" class="sound-btn" id="sound-btn" title="Sound" aria-label="Toggle sound">🔊</button>
+        <button type="button" class="sound-btn" id="sound-btn" title="Sound" aria-label="Toggle sound">
+          <img src="./public/assets/icon-sound.svg" alt="" width="28" height="28" />
+        </button>
       </div>
 
       <!-- mascot -->
       <div class="console-mascot" aria-hidden="true">
-        <img src="./public/assets/hacker-mascot.png" alt="" />
+        <img src="./public/assets/hacker-man.svg" alt="" />
       </div>
     </div><!-- /console-device -->
 
+    <!-- mobile bottom dock -->
+    <nav class="mobile-dock" aria-label="Primary">
+      <button type="button" class="mdock-btn" id="mdock-home" data-view="landing">
+        <img src="./public/assets/hh-house-mark.svg" alt="" width="22" height="22" />
+        <span>Home</span>
+      </button>
+      <button type="button" class="mdock-btn" id="mdock-create" data-view="studio">
+        <img src="./public/assets/seal-goa.svg" alt="" width="22" height="22" />
+        <span>Create</span>
+      </button>
+      <button type="button" class="mdock-btn" id="mdock-map" data-view="map">
+        <img src="./public/assets/hacker-tracker-mark.svg" alt="" width="22" height="22" />
+        <span>Map</span>
+      </button>
+    </nav>
+
     <div class="site-foot">
       <a href="https://hhgoa.com/" target="_blank" rel="noopener">HACKER HOUSE GOA 2026</a>
-      <span>Powered by builders</span>
+      <img src="./public/assets/goa-palm.svg" alt="" width="20" height="20" />
+      <span>28–31 OCT · #FrameInGoa</span>
     </div>
   </div>
 
@@ -404,6 +522,18 @@
   </aside>
 
   <div id="toast" class="toast" hidden></div>
+
+  <!-- Webcam modal -->
+  <div id="webcam-modal" class="webcam-modal" hidden>
+    <div class="webcam-panel">
+      <h3>Selfie</h3>
+      <video id="webcam-video" playsinline autoplay muted></video>
+      <div class="btn-row">
+        <button type="button" class="btn btn-ghost btn-sm" id="webcam-cancel">Cancel</button>
+        <button type="button" class="btn btn-y btn-sm" id="webcam-capture">Capture</button>
+      </div>
+    </div>
+  </div>
 
   <script src="./config.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
