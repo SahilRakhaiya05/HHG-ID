@@ -397,6 +397,18 @@ export default function SimpleMapView() {
     );
   };
 
+  const shareBuilderPass = async (pin: Pin) => {
+    if (!pin.sharedCardId) return;
+    const url = `${window.location.origin}/card/${pin.sharedCardId}`;
+    const text = `${pin.name} · ${pin.title || pin.stack || "HH Goa Builder"}\n${pin.idNumber} · #FrameInGoa`;
+    if (navigator.share) {
+      await navigator.share({ title: `${pin.name} · HH Goa Builder Pass`, text, url }).catch(() => null);
+      return;
+    }
+    await navigator.clipboard?.writeText(url);
+    showToast("Builder pass link copied");
+  };
+
   const handleStagePick = useCallback((event: ReactMouseEvent<HTMLDivElement>) => {
     const map = mapRef.current;
     if (!map || !pickMode) return;
@@ -509,6 +521,12 @@ export default function SimpleMapView() {
               <p>{[selectedPin.stack, selectedPin.city].filter(Boolean).join(" · ") || "—"}</p>
               <p className="ptitle">{selectedPin.title}</p>
               <p className="pid">{selectedPin.idNumber}</p>
+              {selectedPin.sharedCardId && (
+                <div className="pin-popup-actions">
+                  <a href={`/card/${selectedPin.sharedCardId}`} target="_blank" rel="noopener noreferrer">Open 3D pass</a>
+                  <button type="button" onClick={() => shareBuilderPass(selectedPin)}>Share link</button>
+                </div>
+              )}
             </div>
           </div>
         )}

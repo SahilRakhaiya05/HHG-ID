@@ -26,6 +26,9 @@ Branded for [hhgoa.com](https://hhgoa.com) (green `#0b6839` · yellow `#fee101` 
 - Finish: **Goa · Night · Sand**
 - Selfie (webcam) + Sample
 - Map pin (localStorage and/or Supabase)
+- **Upload pass & pin** publishes one cloud credential and map pin with the same UUID.
+- Fellow builders can open the full pass from the map and share its permanent `/card/{uuid}` URL.
+- Public card pages include 3D/2D modes, card flip, PNG download, native sharing, and copy-link actions.
 
 ## Run
 
@@ -43,6 +46,7 @@ npm run dev
 1. Create a project at [supabase.com](https://supabase.com)
 2. SQL Editor → paste & run `supabase/schema.sql`
 3. The schema creates/updates the public **`pins`** storage bucket and required RLS policies.
+	Re-run the full schema after updates so `pins.shared_card_id` is available. Older schemas still work through the shared-image UUID fallback.
 4. Create `.env.local` from `.env.example`:
 
 ```env

@@ -29,6 +29,7 @@ alter table public.pins add column if not exists theme text default 'official';
 alter table public.pins add column if not exists filter text default 'natural';
 alter table public.pins add column if not exists finish text default 'goa';
 alter table public.pins add column if not exists likes int not null default 0;
+alter table public.pins add column if not exists shared_card_id uuid;
 
 -- allow team format on older DBs
 -- (recreate check if needed — safe no-op if already correct)
@@ -43,6 +44,7 @@ end $$;
 create index if not exists pins_visible_created on public.pins (visible, created_at desc);
 create index if not exists pins_geo on public.pins (lat, lng);
 create index if not exists pins_likes on public.pins (likes desc);
+create index if not exists pins_shared_card on public.pins (shared_card_id);
 
 alter table public.pins enable row level security;
 

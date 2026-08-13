@@ -16,8 +16,12 @@ export function saveLocalPins(pins: Pin[]) {
 }
 
 function normalizePin(p: Record<string, unknown>): Pin {
+  const id = String(p.id || uid());
+  const cardUrl = (p.card_url as string) || (p.cardUrl as string) || null;
+  const explicitSharedId = (p.shared_card_id as string) || (p.sharedCardId as string) || null;
+  const sharedCardId = explicitSharedId || (cardUrl?.includes(`/shared/${id}.png`) ? id : null);
   return {
-    id: String(p.id || uid()),
+    id,
     name: String(p.name || "Builder"),
     stack: String(p.stack || ""),
     title: String(p.title || ""),
@@ -28,7 +32,8 @@ function normalizePin(p: Record<string, unknown>): Pin {
     lat: Number(p.lat),
     lng: Number(p.lng),
     photo: (p.photo_url as string) || (p.photo as string) || null,
-    cardUrl: (p.card_url as string) || (p.cardUrl as string) || null,
+    cardUrl,
+    sharedCardId,
     kind: (p.kind as Pin["kind"]) || "builder",
     isSelf: Boolean(p.isSelf),
     createdAt: String(p.created_at || p.createdAt || new Date().toISOString()),
@@ -119,20 +124,27 @@ export async function savePin(
         lng: pin.lng,
         photo_url: pin.photo,
         card_url: pin.cardUrl,
+        shared_card_id: pin.sharedCardId || null,
         visible: true,
       };
       // only send uuid if valid
       if (pin.id && /^[0-9a-f-]{36}$/i.test(pin.id)) row.id = pin.id;
 
-      const { data, error } = await sb.from("pins").insert(row).select().single();
-      if (!error && data) {
-        const saved = normalizePin(data as Record<string, unknown>);
+      let result = await sb.from("pins").insert(row).select().single();
+      if (result.error && /shared_card_id|column|schema cache/i.test(result.error.message)) {
+        const legacyRow = { ...row };
+        delete legacyRow.shared_card_id;
+        result = await sb.from("pins").insert(legacyRow).select().single();
+      }
+      if (!result.error && result.data) {
+        const saved = normalizePin(result.data as Record<string, unknown>);
+        saved.sharedCardId ||= pin.sharedCardId;
         saved.isSelf = pin.isSelf;
         const updated = [saved, ...loadLocalPins().filter((p) => p.id !== saved.id && !p.isSelf)];
         saveLocalPins(updated);
         return saved;
       }
-      if (error) console.warn("pin insert", error.message);
+      if (result.error) console.warn("pin insert", result.error.message);
     } catch (e) {
       console.warn("Supabase insert failed", e);
     }

@@ -21,6 +21,7 @@ import {
   uid,
 } from "@/lib/constants";
 import { fetchPins, savePin, uploadBlob } from "@/lib/supabase/pins";
+import { createSharedCard } from "@/lib/supabase/shared-cards";
 import { genIdNumber, loadImg } from "@/lib/render/card";
 import { playUiSound } from "@/lib/ui-sound";
 
@@ -259,6 +260,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       let photoUrl = thumb.toDataURL("image/jpeg", 0.85);
 
       let cardUrl: string | null = null;
+      let sharedCardId: string | null = null;
       let cardBlob: Blob | null = null;
       if (canvas) {
         cardBlob = await new Promise((r) => canvas.toBlob(r, "image/png"));
@@ -270,8 +272,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (pUrl) photoUrl = pUrl;
       }
       if (cardBlob) {
-        const cUrl = await uploadBlob(`cards/${id}.png`, cardBlob, "image/png");
-        if (cUrl) cardUrl = cUrl;
+        const shared = await createSharedCard(cardBlob, studio, id);
+        if (shared) {
+          cardUrl = shared.cardUrl;
+          sharedCardId = shared.id;
+        } else {
+          const cUrl = await uploadBlob(`cards/${id}.png`, cardBlob, "image/png");
+          if (cUrl) cardUrl = cUrl;
+        }
       }
 
       const pin: Pin = {
@@ -289,6 +297,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         lng: studio.lng,
         photo: photoUrl,
         cardUrl,
+        sharedCardId,
         createdAt: new Date().toISOString(),
         theme: studio.theme,
       };
@@ -302,7 +311,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setSelectedPin(saved);
       setView("map");
       playUiSound("success");
-      showToast(cardUrl ? "Pinned · image saved to cloud" : "Pinned · saved on this device");
+      showToast(sharedCardId ? "Pinned · personal share link ready" : cardUrl ? "Pinned · image saved to cloud" : "Pinned · saved on this device");
     },
     [studio, showToast, reloadPins]
   );

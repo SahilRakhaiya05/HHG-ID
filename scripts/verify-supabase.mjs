@@ -28,6 +28,7 @@ const adminClient = createClient(url, serviceKey, { auth: { persistSession: fals
 const id = randomUUID();
 const objectPath = `_health/${id}.txt`;
 let inserted = false;
+let frameInserted = false;
 let uploaded = false;
 
 try {
@@ -38,6 +39,14 @@ try {
     .limit(3);
   if (readError) throw new Error(`pins read failed: ${readError.message}`);
   console.log(`PASS database read (${existing.length} visible rows sampled)`);
+
+  const { error: sharedColumnError } = await client.from("pins").select("shared_card_id").limit(1);
+  if (sharedColumnError) console.warn("WARN pins.shared_card_id migration pending; URL inference fallback remains active");
+  else console.log("PASS pins.shared_card_id column");
+
+  const { error: framesError } = await client.from("frames").select("id,card_url,visible").limit(1);
+  if (framesError) throw new Error(`frames read failed: ${framesError.message}`);
+  console.log("PASS personalized card table read");
 
   const row = {
     id,
@@ -60,6 +69,19 @@ try {
   inserted = true;
   console.log("PASS database insert + select policy");
 
+  const { data: frame, error: frameError } = await client.from("frames").insert({
+    id,
+    name: "__HHGOA_SHARED_CARD_CHECK__",
+    handle: "",
+    format: "pass",
+    theme: "official",
+    card_url: `https://example.com/${id}.png`,
+    visible: true,
+  }).select("id,name,card_url,visible").single();
+  if (frameError || frame?.id !== id) throw new Error(`frames insert/select failed: ${frameError?.message || "unexpected response"}`);
+  frameInserted = true;
+  console.log("PASS personalized card insert + public select policy");
+
   const payload = new Blob(["HH Goa storage health check"], { type: "text/plain" });
   const { error: uploadError } = await client.storage.from("pins").upload(objectPath, payload, { contentType: "text/plain", upsert: true });
   if (uploadError) throw new Error(`storage upload failed: ${uploadError.message}`);
@@ -73,6 +95,11 @@ try {
     const { error } = await adminClient.storage.from("pins").remove([objectPath]);
     if (error) console.warn(`WARN storage cleanup failed: ${error.message}`);
     else console.log("PASS storage cleanup");
+  }
+  if (frameInserted) {
+    const { error } = await adminClient.from("frames").delete().eq("id", id);
+    if (error) console.warn(`WARN frame cleanup failed: ${error.message}`);
+    else console.log("PASS personalized card cleanup");
   }
   if (inserted) {
     const { error } = await adminClient.from("pins").delete().eq("id", id);

@@ -38,10 +38,10 @@ function normalize(row: Record<string, unknown>): SharedCard {
   };
 }
 
-export async function createSharedCard(blob: Blob, studio: StudioState): Promise<SharedCard | null> {
+export async function createSharedCard(blob: Blob, studio: StudioState, requestedId?: string): Promise<SharedCard | null> {
   const supabase = getSupabase();
   if (!supabase) return null;
-  const id = uid();
+  const id = requestedId || uid();
   const cardUrl = await uploadBlob(`shared/${id}.png`, blob, "image/png");
   if (!cardUrl) return null;
   const row = {
@@ -90,5 +90,20 @@ export async function getSharedCardServer(id: string): Promise<SharedCard | null
     .eq("visible", true)
     .maybeSingle();
   if (error || !data) return null;
-  return normalize(data as Record<string, unknown>);
+  const card = normalize(data as Record<string, unknown>);
+  if (!card.stack || !card.city || !card.idNumber) {
+    const { data: pin } = await supabase
+      .from("pins")
+      .select("stack,title,city,id_number")
+      .eq("id", id)
+      .eq("visible", true)
+      .maybeSingle();
+    if (pin) {
+      card.stack ||= String(pin.stack || "");
+      card.title = String(pin.title || card.title || "Builder");
+      card.city ||= String(pin.city || "");
+      card.idNumber ||= String(pin.id_number || "");
+    }
+  }
+  return card;
 }

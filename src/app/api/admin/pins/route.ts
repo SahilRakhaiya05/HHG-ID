@@ -69,6 +69,7 @@ export async function POST(request: Request) {
     lng: Number(pin.lng),
     photo: pin.photo_url || null,
     cardUrl: pin.card_url || null,
+    sharedCardId: pin.card_url?.includes(`/shared/${pin.id}.png`) ? pin.id : null,
     kind: "builder",
     createdAt: pin.created_at,
   }));

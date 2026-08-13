@@ -182,6 +182,7 @@ export type Pin = {
   lng: number;
   photo: string | null;
   cardUrl: string | null;
+  sharedCardId?: string | null;
   kind: "builder" | "hq" | "you" | "pick";
   isSelf?: boolean;
   createdAt: string;

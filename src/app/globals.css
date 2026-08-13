@@ -1833,6 +1833,31 @@ a { color: inherit; text-decoration: none; }
   position: absolute; top: 2px; right: 6px; z-index: 2;
   font-size: 22px; color: #333; min-width: 36px; min-height: 36px;
 }
+.pin-popup-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
+  margin-top: 7px;
+}
+.pin-popup-actions a,
+.pin-popup-actions button {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 7px;
+  border: 1px solid #052c17;
+  border-radius: 7px;
+  background: #0b6839;
+  color: #fff;
+  font: 800 8px var(--mono);
+  letter-spacing: .05em;
+  text-align: center;
+  text-transform: uppercase;
+}
+.pin-popup-actions button { background: #fee101; color: #052c17; }
+.pin-popup-actions a:hover,
+.pin-popup-actions button:hover { filter: brightness(1.08); }
 
 .pick-bar {
   position: absolute; z-index: 35; left: 12px; right: 12px; top: 120px;
