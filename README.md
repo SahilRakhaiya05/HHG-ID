@@ -69,10 +69,17 @@ Both commands create temporary probe data and clean it with the service role. Th
 ## Deploy to Vercel
 
 1. Import the repository into Vercel.
-2. Add all five environment variables above; set `NEXT_PUBLIC_SITE_URL` to the production HTTPS URL.
-3. Run the latest `supabase/schema.sql` in Supabase SQL Editor.
-4. Deploy. Vercel uses `npm run build` automatically.
-5. Verify `/`, `/admin`, the world map, and one test pin upload.
+2. In **Settings → Build and Deployment**, use:
+	- Framework Preset: **Next.js**
+	- Root Directory: **`.`** (repository root)
+	- Build Command: `npm run build`
+	- Output Directory: leave blank (do not use `public`, `out`, or `hhg-id.vercel.app`)
+3. Add all five environment variables above; set `NEXT_PUBLIC_SITE_URL` to the production HTTPS URL.
+4. Run the latest `supabase/schema.sql` in Supabase SQL Editor.
+5. Redeploy with **Use existing Build Cache** disabled after changing the root/framework settings.
+6. Verify `/`, `/admin`, the world map, and one test pin upload.
+
+The repository includes `vercel.json` to force Next.js detection and `.vercelignore` to prevent the legacy static reference files in the repository root from being deployed. A platform-level Vercel `404: NOT_FOUND` means the domain/deployment alias or project root is wrong; it is not the app's Next.js 404 page.
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` or `ADMIN_PASSWORD` with a `NEXT_PUBLIC_` prefix.
 

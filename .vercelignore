@@ -1,0 +1,29 @@
+# Local dependencies and build output
+node_modules
+.next
+.venv
+.env*
+!.env.example
+
+# Local tooling and research material
+skills
+skills-main
+New folder
+New folder (2)
+recon-*
+
+# Legacy static app files at repository root
+index.html
+admin.html
+admin.js
+app.js
+config.js
+styles.css
+hhg-id.vercel.app
+images (3).jpg
+
+# Local screenshots and temporary data
+screencapture-*
+*.log
+*.tmp
+*.bak
